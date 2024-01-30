@@ -55,12 +55,13 @@ def loadMap(key, xOffset, yOffset, zOffset):
 #         if playerZ >= hitbox[2] and playerZ <= hitbox[5]:
 #             return z
 
-
+def dotProduct(x1,y1,x2,y2):
+    return (x1*x2)+(y1*y2)
 
 def setup():
     size(1000, 700, P3D)
-    fullScreen()
-    noCursor()
+    # fullScreen()
+    # noCursor()
 
     global x,y,z
     x,y,z = 0,0,0
@@ -72,8 +73,8 @@ def setup():
 def player():
     # player settings
     global x,y,z, hitboxes
-    
-    step = 10
+
+    step = 1
     # keyboard controls
     if keyPressed:
         if key == "w":
@@ -85,6 +86,7 @@ def player():
         elif key == "d":
             x += (step)
 
+
     return [x,y,z]
     # camera(x, y, z, x, y, z, 0, 1, 0)  # Update camera position based on player's movement
 
@@ -93,17 +95,35 @@ def draw():
     # Define camera math
     #####################
     xCenter = ((float(mouseX) - (float(width)/2)) / float(width) ) * 360
-    print(xCenter)
     yCenter = ((float(mouseY) - (float(height)/2)) / float(height) ) * 360
-    # print(yCenter)
+    print(xCenter)
     #####################
     radius = 100
-    camX = xCenter/radius
+    camX = xCenter/radius # arc length, arc length/radius = angle
+    print(camX)
     camY = yCenter/radius
     #####################
-    camera(camX, camY, (height/2), (xCenter*50), (yCenter*50), 100, 0, 1, 0)
+    camera(xCenter, yCenter, (height/2), (xCenter*50), (yCenter*50), 100, 0, 1, 0)
+
+
+    # localise the player position based on the camera
+
     x,y,z = player()
-    # localise the player position base on the camera
+
+    dot = dotProduct(1,1,(z*sin(camX)),(z*cos(camX)))
+
+    if dot > 0:
+        tz = z
+        z = tz*cos((xCenter/360)*(2*PI))
+        x = tz*sin((xCenter/360)*(2*PI))
+    elif dot < 0:
+        tz = (2*PI) - z
+        z = tz*cos(xCenter/tz)
+        x = tz*sin(xCenter/tz)
+
+    print(z)
+    print(x)
+
     # x = x/cos(camX)
     # z = z/cos(camX*2*PI)
     # z = z/cos(camX)
@@ -114,7 +134,6 @@ def draw():
 
     # Load the map
     loadMap(0, x, y, z)
-    
     # Load the map
     # player()
 
