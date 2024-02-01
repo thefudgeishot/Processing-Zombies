@@ -3,6 +3,10 @@
 #                                                                            # 
 ##############################################################################
 
+# if running on linux, uncomment the following line
+# from java.lang import System
+# System.setProperty("jogl.disable.openglcore", "false")
+
 def gridConvert(x, y, z):
     global scaling_factor
     scaling_factor = 50.1  # Adjust the scaling factor as needed
@@ -27,7 +31,7 @@ def renderBlock(x,y,z,r,g,b):
 
 def loadMap(key, xOffset, yOffset, zOffset):
     
-    background(0)
+    # background(0)
 
     # Define the maps in a array
     maps = ["test", "test2"]
@@ -93,10 +97,12 @@ def player():
 
 def draw():
 
+    background(0)
+
     global scaling_factor
     # Define camera math
     #####################
-    xCenter = ((float(mouseX) - (float(width)/2)) / float(width) ) * -(4*PI)
+    xCenter = ((float(mouseX) - (float(width)/2)) / float(width) ) * (4*PI)
     yCenter = ((float(mouseY) - (float(height)/2)) / float(height) ) * (2*PI)
     print("Angle:" + str(xCenter))
     #####################
@@ -112,20 +118,26 @@ def draw():
 
     x,y,z = player()
 
-    dot = dotProduct(1,1,(z*cos(xCenter)),(z*sin(xCenter)))
+    print(z)
+    print(x)
 
-    if dot > 0:
-        tz = z
-        z = tz*cos(xCenter)
-        x = tz*sin(xCenter)
-    elif dot < 0:
-        tz = z
-        z = tz*cos(xCenter)
-        x = tz*sin(xCenter)
+    # dot = dotProduct(1,1,(z*cos(xCenter)),(z*sin(xCenter)))
+
+    # calculate the new x and z based on the camera angle
+    tz = z
+    x = tz*cos(xCenter)
+    z = tz*sin(xCenter)
 
 
     camera(0 + x, yCenter, 0 + z, (50*cos(xCenter)) + x, (50*yCenter), (50*sin(xCenter)) + z, 0, 1, 0)
     
+    # pushMatrix()
+    # fill(255,0,0)
+    # noStroke()
+    # translate((50*cos(xCenter)) + x, (50*yCenter), (50*sin(xCenter)) + z)
+    # box(5)
+    # popMatrix()
+
     print(z)
     print(x)
 
