@@ -4,6 +4,7 @@
 ##############################################################################
 
 def gridConvert(x, y, z):
+    global scaling_factor
     scaling_factor = 50.1  # Adjust the scaling factor as needed
     return [x * scaling_factor, y * scaling_factor, z * scaling_factor]
 
@@ -56,7 +57,7 @@ def loadMap(key, xOffset, yOffset, zOffset):
 #             return z
 
 def dotProduct(x1,y1,x2,y2):
-    return (x1*x2)+(y1*y2)
+    return (float(x1)*float(x2)) + (float(y1)*float(y2))
 
 def setup():
     size(1000, 700, P3D)
@@ -92,35 +93,39 @@ def player():
 
 def draw():
 
+    global scaling_factor
     # Define camera math
     #####################
-    xCenter = ((float(mouseX) - (float(width)/2)) / float(width) ) * 360
-    yCenter = ((float(mouseY) - (float(height)/2)) / float(height) ) * 360
-    print(xCenter)
+    xCenter = ((float(mouseX) - (float(width)/2)) / float(width) ) * -(4*PI)
+    yCenter = ((float(mouseY) - (float(height)/2)) / float(height) ) * (2*PI)
+    print("Angle:" + str(xCenter))
     #####################
     radius = 100
     camX = xCenter/radius # arc length, arc length/radius = angle
-    print(camX)
+    # print(camX)
     camY = yCenter/radius
     #####################
-    camera(xCenter, yCenter, (height/2), (xCenter*50), (yCenter*50), 100, 0, 1, 0)
+    # print(modelX(0,0,0))
 
 
     # localise the player position based on the camera
 
     x,y,z = player()
 
-    dot = dotProduct(1,1,(z*sin(camX)),(z*cos(camX)))
+    dot = dotProduct(1,1,(z*cos(xCenter)),(z*sin(xCenter)))
 
     if dot > 0:
         tz = z
-        z = tz*cos((xCenter/360)*(2*PI))
-        x = tz*sin((xCenter/360)*(2*PI))
+        z = tz*cos(xCenter)
+        x = tz*sin(xCenter)
     elif dot < 0:
-        tz = (2*PI) - z
-        z = tz*cos(xCenter/tz)
-        x = tz*sin(xCenter/tz)
+        tz = z
+        z = tz*cos(xCenter)
+        x = tz*sin(xCenter)
 
+
+    camera(0 + x, yCenter, 0 + z, (50*cos(xCenter)) + x, (50*yCenter), (50*sin(xCenter)) + z, 0, 1, 0)
+    
     print(z)
     print(x)
 
@@ -133,7 +138,7 @@ def draw():
     # print(x)
 
     # Load the map
-    loadMap(0, x, y, z)
+    loadMap(0, 0, 0, 0)
     # Load the map
     # player()
 
