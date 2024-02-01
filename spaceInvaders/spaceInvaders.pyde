@@ -9,7 +9,7 @@
 
 def gridConvert(x, y, z):
     global scaling_factor
-    scaling_factor = 50.1  # Adjust the scaling factor as needed
+    scaling_factor = 100.1  # Adjust the scaling factor as needed
     return [x * scaling_factor, y * scaling_factor, z * scaling_factor]
 
 def renderBlock(x,y,z,r,g,b):
@@ -22,7 +22,7 @@ def renderBlock(x,y,z,r,g,b):
     fill(r,g,b)
     noStroke()
     translate(x,y,z)
-    box(50)
+    box(100)
     popMatrix()
 
     # define the hitbox
@@ -74,22 +74,34 @@ def setup():
     global hitboxes
     hitboxes = []
 
+    global buffer, bx, by, bz, angle
+    buffer = [0]
+    bx = [0,0]
+    by = [0,0]
+    bz = [0]
+    angle = [0]
 
-def player():
+def movement(dir,step, rotation):
+    # up=0, down=1, left=2, right=3
+
+    if dir == 0:
+        
+    
+def player(rotation):
     # player settings
-    global x,y,z, hitboxes
+    # global x,y,z, hitboxes
 
     step = 1
     # keyboard controls
     if keyPressed:
         if key == "w":
-            z += (step)
+            movement(0,step)
         elif key == "s":
-            z -= (step)
+            movement(1,step)
         elif key == "a":
-            x -= (step)
+            movement(2,step)
         elif key == "d":
-            x += (step)
+            movement(3,step)
 
 
     return [x,y,z]
@@ -99,7 +111,7 @@ def draw():
 
     background(0)
 
-    global scaling_factor
+    global scaling_factor, buffer, bx, by, bz, angle
     # Define camera math
     #####################
     xCenter = ((float(mouseX) - (float(width)/2)) / float(width) ) * (4*PI)
@@ -118,18 +130,37 @@ def draw():
 
     x,y,z = player()
 
-    print(z)
-    print(x)
 
     # dot = dotProduct(1,1,(z*cos(xCenter)),(z*sin(xCenter)))
 
     # calculate the new x and z based on the camera angle
-    tz = z
-    x = tz*cos(xCenter)
-    z = tz*sin(xCenter)
+    # check to see if a movement is needed
+    print("checking buffer")
+    print(buffer)
+    if z > buffer[0]:
+        print("translating z")
+        # delete the previous buffer
+        buffer.pop(0)
+        buffer.append(z)
+
+        bx.pop(0)
+        bz.pop(0)
+        bx.append(z*cos(xCenter))
+        bz.append(z*sin(xCenter))
+
+    
+        angle.pop(0)
+        angle.append(xCenter)
+    
+    print("printing buffer")
+    print(bx)
+    print(bz)
+    x = bx[0]
+    z = bz[0]
 
 
-    camera(0 + x, yCenter, 0 + z, (50*cos(xCenter)) + x, (50*yCenter), (50*sin(xCenter)) + z, 0, 1, 0)
+    camera(0 + x, yCenter, 0 + z, (50*cos(xCenter+(xCenter-angle[0]))) + x, (50*yCenter), (50*sin(xCenter+(xCenter-angle[0]))) + z, 0, 1, 0)
+    perspective()
     
     # pushMatrix()
     # fill(255,0,0)
