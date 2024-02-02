@@ -34,7 +34,7 @@ def loadMap(key, xOffset, yOffset, zOffset):
     # background(0)
 
     # Define the maps in a array
-    maps = ["test", "test2"]
+    maps = ["test", "test2", "flight"]
 
     # Load the map
     mapData = loadStrings("maps/" + maps[key] + ".txt")
@@ -71,6 +71,9 @@ def setup():
     global x,y,z
     x,y,z = 0,0,0
 
+    global dx,dy,dz
+    dx,dy,dz = 0,0,0
+
     global hitboxes
     hitboxes = []
 
@@ -81,42 +84,50 @@ def setup():
     bz = [0]
     angle = [0]
 
-def movement(dir,step, rotation):
+def movementCalc(dir,step):
     # up=0, down=1, left=2, right=3
 
-    if dir == 0:
-        
+    global dx,dy,dz,rotation
     
-def player(rotation):
+    if dir == 0:
+        dx += step*cos(rotation)
+        dz += step*sin(rotation)
+    elif dir == 1:
+        dx -= step*cos(rotation)
+        dz -= step*sin(rotation)
+    
+    return [dx,dy,dz]
+
+def player():
     # player settings
-    # global x,y,z, hitboxes
+    global dx,dy,dz
 
     step = 1
     # keyboard controls
     if keyPressed:
         if key == "w":
-            movement(0,step)
+            dx,dy,dz = movementCalc(0,step)
         elif key == "s":
-            movement(1,step)
+            dx,dy,dz = movementCalc(1,step)
         elif key == "a":
-            movement(2,step)
+            dx,dy,dz = movement(2,step)
         elif key == "d":
-            movement(3,step)
+            dx,dy,dz = movement(3,step)
 
-
-    return [x,y,z]
+    return [dx,dy,dz]
     # camera(x, y, z, x, y, z, 0, 1, 0)  # Update camera position based on player's movement
 
 def draw():
 
     background(0)
 
-    global scaling_factor, buffer, bx, by, bz, angle
+    global scaling_factor, buffer, bx, by, bz, angle, rotation, x, y, z
     # Define camera math
     #####################
     xCenter = ((float(mouseX) - (float(width)/2)) / float(width) ) * (4*PI)
     yCenter = ((float(mouseY) - (float(height)/2)) / float(height) ) * (2*PI)
     print("Angle:" + str(xCenter))
+    rotation = xCenter
     #####################
     radius = 100
     camX = xCenter/radius # arc length, arc length/radius = angle
@@ -127,8 +138,7 @@ def draw():
 
 
     # localise the player position based on the camera
-
-    x,y,z = player()
+    dx,dy,dz = player()
 
 
     # dot = dotProduct(1,1,(z*cos(xCenter)),(z*sin(xCenter)))
@@ -137,7 +147,7 @@ def draw():
     # check to see if a movement is needed
     print("checking buffer")
     print(buffer)
-    if z > buffer[0]:
+    if dz > buffer[0] or dz < buffer[0]:
         print("translating z")
         # delete the previous buffer
         buffer.pop(0)
@@ -145,8 +155,8 @@ def draw():
 
         bx.pop(0)
         bz.pop(0)
-        bx.append(z*cos(xCenter))
-        bz.append(z*sin(xCenter))
+        bx.append(dz*cos(xCenter))
+        bz.append(dz*sin(xCenter))
 
     
         angle.pop(0)
@@ -155,8 +165,8 @@ def draw():
     print("printing buffer")
     print(bx)
     print(bz)
-    x = bx[0]
-    z = bz[0]
+    x += bx[0]
+    z += bz[0]
 
 
     camera(0 + x, yCenter, 0 + z, (50*cos(xCenter+(xCenter-angle[0]))) + x, (50*yCenter), (50*sin(xCenter+(xCenter-angle[0]))) + z, 0, 1, 0)
