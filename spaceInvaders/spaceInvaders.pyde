@@ -28,6 +28,24 @@ def renderBlock(x,y,z,r,g,b):
     # define the hitbox
     hitboxes.append([x,y,z,(x+50),(y+50),(z+50)])
 
+def loadHitboxes(key):
+
+    # Create a 3D array with dimensions 50x50x10, or as x,z,y
+    hitboxes = [[[0 for _ in range(20)] for _ in range(20)] for _ in range(10)]
+
+    # Define the maps in a array
+    maps = ["test", "test2", "flight"]
+
+    # Load the map
+    mapData = loadStrings("maps/" + maps[key] + ".txt")
+
+    for line in mapData:
+        # split and convert the data
+        data = str(line).strip("[]").split(",")
+        x,y,z = int(data[0]), int(data[1]), int(data[2])
+        hitboxes[y][x][z] = 1
+
+    return hitboxes
 
 def loadMap(key, xOffset, yOffset, zOffset):
     
@@ -75,7 +93,9 @@ def setup():
     dx,dy,dz = 0,0,0
 
     global hitboxes
-    hitboxes = []
+    hitboxes = loadHitboxes(0) # hitboxes only need to be loaded once
+    print(hitboxes[2][4][0])
+    # exit()
 
     global buffer, bx, by, bz, angle
     buffer = [0]
@@ -107,6 +127,11 @@ def movementCalc(dir,step, rotation):
     
     return [dx,dy,dz]
 
+def gravityCalc():
+    global dx,dy,dz
+    dy -= 0.1
+    return [dx,dy,dz]
+
 def player():
     # player settings
 
@@ -135,7 +160,7 @@ def draw():
 
     background(0)
 
-    global scaling_factor, buffer, bx, by, bz, angle, rotation, x, y, z
+    global scaling_factor, buffer, bx, by, bz, angle, rotation, x, y, z, hitboxes
     # Define camera math
     #####################
     xCenter = ((float(mouseX) - (float(width)/2)) / float(width) ) * (4*PI)
@@ -143,21 +168,21 @@ def draw():
     print("Angle:" + str(360*(xCenter)/2*PI))
     rotation = xCenter
     #####################
-    radius = 100
-    camX = xCenter/radius # arc length, arc length/radius = angle
-    # print(camX)
-    camY = yCenter/radius
-    #####################
-    # print(modelX(0,0,0))
 
-
+    # get hitboxes
     # localise the player position based on the camera
     dx,dy,dz = player()
 
     # translate rigid x,y,z to camera x,y,z
     if dz > 0:
         print("forward")
-        dx,dy,dz = movementCalc(0,dz, rotation)
+        # check if there is a block in the way
+        print("x: " + str(int(x/100)+int(cos(rotation))) + " y: " + str(2) + " z: " + str(int((z/100)+int(sin(rotation)))))
+        if int(hitboxes[int(2)][int(x/100)+int(1.1*cos(rotation))][int((z/100)+int(1.2*sin(rotation)))]) == 0: # y, x, z
+            dx,dy,dz = movementCalc(0,dz, rotation)
+        else:
+            print("collision")
+            dx,dy,dz = 0,0,0
     elif dz < 0:
         print("backward")
         dx,dy,dz = movementCalc(1,dz, rotation)
@@ -166,75 +191,29 @@ def draw():
         dx,dy,dz = movementCalc(2,dx, rotation)
     elif dx < 0:
         print("left")
-        dx,dy,dz = movementCalc(3,dx, rotation)
+        # check if there is a block in the way
+        print("x: " + str(x) + " y: " + str(y) + " z: " + str(z))
+        if int(hitboxes[int(2)][int((x/100)+1)][int(z/100)]) == 0:
+            dx,dy,dz = movementCalc(3,dx, rotation)
+        else:
+            print("collision")
+            dx,dy,dz = 0,0,0
 
     x += dx
     z += dz
-    # dot = dotProduct(1,1,(z*cos(xCenter)),(z*sin(xCenter)))
 
-    # calculate the new x and z based on the camera angle
-    # check to see if a movement is needed
-    # print("checking buffer")
-    # print(buffer)
-    # if dz > buffer[0] or dz < buffer[0]:
-    #     print("translating z")
-    #     # delete the previous buffer
-    #     buffer.pop(0)
-    #     buffer.append(z)
-# 
-    #     bx.pop(0)
-    #     bz.pop(0)
-    #     bx.append(dz*cos(xCenter))
-    #     bz.append(dz*sin(xCenter))
-# 
-    # 
-    #     angle.pop(0)
-    #     angle.append(xCenter)
-# 
-    # if dx > buffer[0] or dx < buffer[0]:
-    #     print("translating x")
-    #     # delete the previous buffer
-    #     buffer.pop(0)
-    #     buffer.append(x)
-# 
-    #     bx.pop(0)
-    #     bz.pop(0)
-    #     bx.append(dx*cos(xCenter))
-    #     bz.append(dx*sin(xCenter))
-# 
-    # 
-    #     angle.pop(0)
-    #     angle.append(xCenter)
-    # 
-    # print("printing buffer")
-    # print(bx)
-    # print(bz)
-    # x += bx[0]
-    # z += bz[0]
-
-    camera(x, yCenter, z, (50*cos(xCenter)) + x, (50*yCenter), (50*sin(xCenter)) + z, 0, 1, 0)
-    perspective()
+    # run gravity calculations
     
-    # pushMatrix()
-    # fill(255,0,0)
-    # noStroke()
-    # translate((50*cos(xCenter)) + x, (50*yCenter), (50*sin(xCenter)) + z)
-    # box(5)
-    # popMatrix()
+
+    beginCamera()
+    camera(x, yCenter, z, (50*cos(xCenter)) + x, (50*yCenter), (50*sin(xCenter)) + z, 0, 1, 0)
+    print(yCenter)
+    perspective()
+    endCamera()
 
     print(z)
     print(x)
-
-    # x = x/cos(camX)
-    # z = z/cos(camX*2*PI)
-    # z = z/cos(camX)
-    # z = sin(camX) * z
-    # x = cos(camX) * z
-    # print(z)
-    # print(x)
-
     # Load the map
     loadMap(0, 0, 0, 0)
-    # Load the map
-    # player()
+
 
