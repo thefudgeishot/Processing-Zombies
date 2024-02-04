@@ -79,41 +79,55 @@ def setup():
 
     global buffer, bx, by, bz, angle
     buffer = [0]
-    bx = [0,0]
+    bx = [0]
     by = [0,0]
     bz = [0]
     angle = [0]
 
-def movementCalc(dir,step):
+def movementCalc(dir,step, rotation):
     # up=0, down=1, left=2, right=3
 
-    global dx,dy,dz,rotation
+    global dx,dy,dz
     
+    dx,dy,dz = 0,0,0
+
     if dir == 0:
         dx += step*cos(rotation)
         dz += step*sin(rotation)
     elif dir == 1:
-        dx -= step*cos(rotation)
-        dz -= step*sin(rotation)
+        dx += step*cos(rotation)
+        dz += step*sin(rotation)
+    elif dir == 2:
+        dx += step*cos(rotation+(PI/2))
+        dz += step*sin(rotation+(PI/2))
+    elif dir == 3:
+        dx += step*cos(rotation+(PI/2))
+        dz += step*sin(rotation+(PI/2))
+
     
     return [dx,dy,dz]
 
 def player():
     # player settings
-    global dx,dy,dz
 
-    step = 1
+    dx,dy,dz = 0,0,0
+    step = 7.5
     # keyboard controls
     if keyPressed:
         if key == "w":
-            dx,dy,dz = movementCalc(0,step)
+            # dx,dy,dz = movementCalc(0,step)
+            dz += step
         elif key == "s":
-            dx,dy,dz = movementCalc(1,step)
+            # dx,dy,dz = movementCalc(1,step)
+            dz -= step
         elif key == "a":
-            dx,dy,dz = movement(2,step)
+            # dx,dy,dz = movement(2,step)
+            dx -= step
         elif key == "d":
-            dx,dy,dz = movement(3,step)
+            # dx,dy,dz = movement(3,step)
+            dx += step
 
+    print("delta coordinates: " + str(dx) + "," + str(dy) + "," + str(dz))
     return [dx,dy,dz]
     # camera(x, y, z, x, y, z, 0, 1, 0)  # Update camera position based on player's movement
 
@@ -126,7 +140,7 @@ def draw():
     #####################
     xCenter = ((float(mouseX) - (float(width)/2)) / float(width) ) * (4*PI)
     yCenter = ((float(mouseY) - (float(height)/2)) / float(height) ) * (2*PI)
-    print("Angle:" + str(xCenter))
+    print("Angle:" + str(360*(xCenter)/2*PI))
     rotation = xCenter
     #####################
     radius = 100
@@ -140,36 +154,65 @@ def draw():
     # localise the player position based on the camera
     dx,dy,dz = player()
 
+    # translate rigid x,y,z to camera x,y,z
+    if dz > 0:
+        print("forward")
+        dx,dy,dz = movementCalc(0,dz, rotation)
+    elif dz < 0:
+        print("backward")
+        dx,dy,dz = movementCalc(1,dz, rotation)
+    elif dx > 0:
+        print("right")
+        dx,dy,dz = movementCalc(2,dx, rotation)
+    elif dx < 0:
+        print("left")
+        dx,dy,dz = movementCalc(3,dx, rotation)
 
+    x += dx
+    z += dz
     # dot = dotProduct(1,1,(z*cos(xCenter)),(z*sin(xCenter)))
 
     # calculate the new x and z based on the camera angle
     # check to see if a movement is needed
-    print("checking buffer")
-    print(buffer)
-    if dz > buffer[0] or dz < buffer[0]:
-        print("translating z")
-        # delete the previous buffer
-        buffer.pop(0)
-        buffer.append(z)
+    # print("checking buffer")
+    # print(buffer)
+    # if dz > buffer[0] or dz < buffer[0]:
+    #     print("translating z")
+    #     # delete the previous buffer
+    #     buffer.pop(0)
+    #     buffer.append(z)
+# 
+    #     bx.pop(0)
+    #     bz.pop(0)
+    #     bx.append(dz*cos(xCenter))
+    #     bz.append(dz*sin(xCenter))
+# 
+    # 
+    #     angle.pop(0)
+    #     angle.append(xCenter)
+# 
+    # if dx > buffer[0] or dx < buffer[0]:
+    #     print("translating x")
+    #     # delete the previous buffer
+    #     buffer.pop(0)
+    #     buffer.append(x)
+# 
+    #     bx.pop(0)
+    #     bz.pop(0)
+    #     bx.append(dx*cos(xCenter))
+    #     bz.append(dx*sin(xCenter))
+# 
+    # 
+    #     angle.pop(0)
+    #     angle.append(xCenter)
+    # 
+    # print("printing buffer")
+    # print(bx)
+    # print(bz)
+    # x += bx[0]
+    # z += bz[0]
 
-        bx.pop(0)
-        bz.pop(0)
-        bx.append(dz*cos(xCenter))
-        bz.append(dz*sin(xCenter))
-
-    
-        angle.pop(0)
-        angle.append(xCenter)
-    
-    print("printing buffer")
-    print(bx)
-    print(bz)
-    x += bx[0]
-    z += bz[0]
-
-
-    camera(0 + x, yCenter, 0 + z, (50*cos(xCenter+(xCenter-angle[0]))) + x, (50*yCenter), (50*sin(xCenter+(xCenter-angle[0]))) + z, 0, 1, 0)
+    camera(x, yCenter, z, (50*cos(xCenter)) + x, (50*yCenter), (50*sin(xCenter)) + z, 0, 1, 0)
     perspective()
     
     # pushMatrix()
