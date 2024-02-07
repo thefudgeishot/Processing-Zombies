@@ -4,8 +4,8 @@
 ##############################################################################
 
 # if running on linux, uncomment the following line
-# from java.lang import System
-# System.setProperty("jogl.disable.openglcore", "false")
+from java.lang import System
+System.setProperty("jogl.disable.openglcore", "false")
 
 def gridConvert(x, y, z):
     global scaling_factor
@@ -127,6 +127,33 @@ def movementCalc(dir,step, rotation):
     
     return [dx,dy,dz]
 
+def hitboxCalc(rotation):
+
+    # convert rotation if needed for values between 0 and 360
+    rotation = abs(((rotation/360) - floor(rotation/360)) * 360)
+
+    # calculate which hitbox is in front of the player
+    # [0,0] [1,0] [1,1]
+    # [0,1] player [1,1]
+    # [0,1] [-1,1] [-1,0]
+    if 0 < rotation < 45:
+        return [1,0]
+    elif 45 < rotation < 90:
+        return [1,1]
+    elif 90 < rotation < 135:
+        return [0,1]
+    elif 135 < rotation < 180:
+        return [-1,1]
+    elif 180 < rotation < 225:
+        return [-1,0]
+    elif 225 < rotation < 270:
+        return [-1,-1]
+    elif 270 < rotation < 315:
+        return [0,-1]
+    elif 315 < rotation < 360:
+        return [1,-1]
+
+
 def gravityCalc():
     global dx,dy,dz
     dy -= 0.1
@@ -173,12 +200,15 @@ def draw():
     # localise the player position based on the camera
     dx,dy,dz = player()
 
+    print("x:" + str((x-50)/100.1))
+    print("z:" + str((z-50)/100.1))
     # translate rigid x,y,z to camera x,y,z
     if dz > 0:
         print("forward")
         # check if there is a block in the way
-        print("x: " + str(int(x/100)+int(cos(rotation))) + " y: " + str(2) + " z: " + str(int((z/100)+int(sin(rotation)))))
-        if int(hitboxes[int(2)][int(x/100)+int(1.1*cos(rotation))][int((z/100)+int(1.2*sin(rotation)))]) == 0: # y, x, z
+        print("x: " + str(int(x/90)+int(cos(rotation))) + " y: " + str(2) + " z: " + str(int((z/90)+int(sin(rotation)))))
+        # lx,lz = hitboxCalc(rotation)
+        if int(hitboxes[int(2)][int((x-50)/100.1)+int(1.1*cos(rotation))][int(((z-50)/100.1)+int(1.1*sin(rotation)))]) == 0: # y, x, z
             dx,dy,dz = movementCalc(0,dz, rotation)
         else:
             print("collision")
