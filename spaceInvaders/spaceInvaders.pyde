@@ -4,8 +4,8 @@
 ##############################################################################
 
 # if running on linux, uncomment the following line
-# from java.lang import System
-# System.setProperty("jogl.disable.openglcore", "false")
+from java.lang import System
+System.setProperty("jogl.disable.openglcore", "false")
 
 def gridConvert(x, y, z):
     global scaling_factor
@@ -203,10 +203,10 @@ def draw():
     # translate rigid x,y,z to camera x,y,z
     if dz > 0:
         print("forward")
-        # check if there is a block in the way
-        print("x: " + str(int(x/90)+int(cos(rotation))) + " y: " + str(2) + " z: " + str(int((z/90)+int(sin(rotation)))))
+        # check if there is a block in the way https://www.desmos.com/calculator/k0laxz7oob
+        print("x: " + str(int((x+50)+cos(rotation))/100) + " y: " + str(2) + " z: " + str(int((z+50)+sin(rotation))/100))
         # lx,lz = hitboxCalc(rotation)
-        if int(hitboxes[int(2)][int((x+50)/100)+int(1.05*cos(rotation))][int(((z+50)/100)+int(1.05*sin(rotation)))]) == 0: # y, x, z
+        if int(hitboxes[int(2)][int((x+50)+cos(rotation))/100][int((z+50)+sin(rotation))/100]) == 0: # y, x, z
         
             # convert hitbox coordinates to world coordinates 
             hx, hy, hz = gridConvert(int((x+50)/100)+int(1.05*cos(rotation)), int(2), int(((z+50)/100)+int(1.05*sin(rotation)))) # x y z
