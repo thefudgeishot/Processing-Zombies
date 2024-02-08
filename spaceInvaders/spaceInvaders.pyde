@@ -4,13 +4,13 @@
 ##############################################################################
 
 # if running on linux, uncomment the following line
-from java.lang import System
-System.setProperty("jogl.disable.openglcore", "false")
+# from java.lang import System
+# System.setProperty("jogl.disable.openglcore", "false")
 
 def gridConvert(x, y, z):
     global scaling_factor
-    scaling_factor = 100.1  # Adjust the scaling factor as needed
-    return [x * scaling_factor, y * scaling_factor, z * scaling_factor]
+    scaling_factor = 100  # Adjust the scaling factor as needed
+    return [(x * scaling_factor)+0.1, (y * scaling_factor)+0.1, (z * scaling_factor)+0.1]
 
 def renderBlock(x,y,z,r,g,b):
     
@@ -25,8 +25,6 @@ def renderBlock(x,y,z,r,g,b):
     box(100)
     popMatrix()
 
-    # define the hitbox
-    hitboxes.append([x,y,z,(x+50),(y+50),(z+50)])
 
 def loadHitboxes(key):
 
@@ -104,7 +102,7 @@ def setup():
     bz = [0]
     angle = [0]
 
-def movementCalc(dir,step, rotation):
+def movementCalc(dir, step, rotation):
     # up=0, down=1, left=2, right=3
 
     global dx,dy,dz
@@ -127,10 +125,10 @@ def movementCalc(dir,step, rotation):
     
     return [dx,dy,dz]
 
-def hitboxCalc(rotation):
+def hitboxCalc(rotation, x, y, z):
 
     # convert rotation if needed for values between 0 and 360
-    rotation = abs(((rotation/360) - floor(rotation/360)) * 360)
+    rotation = abs(((rotation/360) - floor(rotation/360)) * 360) # INPUT IS RADIANS CONVERT IT FOR THE SHITS AND GIGGLES
 
     # calculate which hitbox is in front of the player
     # [0,0] [1,0] [1,1]
@@ -138,19 +136,19 @@ def hitboxCalc(rotation):
     # [0,1] [-1,1] [-1,0]
     if 0 < rotation < 45:
         return [1,0]
-    elif 45 < rotation < 90:
+    elif 45 <= rotation < 90:
         return [1,1]
     elif 90 < rotation < 135:
         return [0,1]
-    elif 135 < rotation < 180:
+    elif 135 <= rotation < 180:
         return [-1,1]
     elif 180 < rotation < 225:
         return [-1,0]
-    elif 225 < rotation < 270:
+    elif 225 <= rotation < 270:
         return [-1,-1]
     elif 270 < rotation < 315:
         return [0,-1]
-    elif 315 < rotation < 360:
+    elif 315 <= rotation < 360:
         return [1,-1]
 
 
@@ -200,16 +198,27 @@ def draw():
     # localise the player position based on the camera
     dx,dy,dz = player()
 
-    print("x:" + str((x-50)/100.1))
-    print("z:" + str((z-50)/100.1))
+    print("x:" + str((x+50)/100))
+    print("z:" + str((z+50)/100))
     # translate rigid x,y,z to camera x,y,z
     if dz > 0:
         print("forward")
         # check if there is a block in the way
         print("x: " + str(int(x/90)+int(cos(rotation))) + " y: " + str(2) + " z: " + str(int((z/90)+int(sin(rotation)))))
         # lx,lz = hitboxCalc(rotation)
-        if int(hitboxes[int(2)][int((x-50)/100.1)+int(1.1*cos(rotation))][int(((z-50)/100.1)+int(1.1*sin(rotation)))]) == 0: # y, x, z
+        if int(hitboxes[int(2)][int((x+50)/100)+int(1.05*cos(rotation))][int(((z+50)/100)+int(1.05*sin(rotation)))]) == 0: # y, x, z
+        
+            # convert hitbox coordinates to world coordinates 
+            hx, hy, hz = gridConvert(int((x+50)/100)+int(1.05*cos(rotation)), int(2), int(((z+50)/100)+int(1.05*sin(rotation)))) # x y z
+
+            # calculate the movement
             dx,dy,dz = movementCalc(0,dz, rotation)
+
+            # ensure the player is not in the block
+            if hx <= (x+dx) <= hx+100 or hz <= (z+dz) <= hz+100:
+                print("collision")
+                dx,dy,dz = 0,0,0
+
         else:
             print("collision")
             dx,dy,dz = 0,0,0
