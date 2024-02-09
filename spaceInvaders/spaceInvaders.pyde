@@ -208,7 +208,11 @@ def draw():
         # lx,lz = hitboxCalc(rotation)
         if int(hitboxes[int(2)][int((x+50)/100)+int(1.05*cos(rotation))][int(((z+50)/100)+int(1.05*sin(rotation)))]) == 0: # y, x, z
         
-            # convert hitbox coordinates to world coordinates 
+            # calculate the movement 
+            dx,dy,dz = movementCalc(0,dz, rotation)
+
+        else:
+
             hx, hy, hz = gridConvert(int((x+50)/100)+int(1.05*cos(rotation)), int(2), int(((z+50)/100)+int(1.05*sin(rotation)))) # x y z
 
             # calculate the movement
@@ -219,9 +223,6 @@ def draw():
                 print("collision")
                 dx,dy,dz = 0,0,0
 
-        else:
-            print("collision")
-            dx,dy,dz = 0,0,0
     elif dz < 0:
         print("backward")
         dx,dy,dz = movementCalc(1,dz, rotation)
