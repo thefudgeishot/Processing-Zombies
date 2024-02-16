@@ -4,13 +4,13 @@
 ##############################################################################
 
 # if running on linux, uncomment the following line
-from java.lang import System
-System.setProperty("jogl.disable.openglcore", "false")
+# from java.lang import System
+# System.setProperty("jogl.disable.openglcore", "false")
 
 def gridConvert(x, y, z):
     global scaling_factor
     scaling_factor = 100  # Adjust the scaling factor as needed
-    return [(x * scaling_factor)+0.1, (y * scaling_factor)+0.1, (z * scaling_factor)+0.1]
+    return [(x * scaling_factor)+70.1, (y * scaling_factor)+0.1, (z * scaling_factor)+70.1]
 
 def renderBlock(x,y,z,r,g,b):
     
@@ -25,6 +25,26 @@ def renderBlock(x,y,z,r,g,b):
     box(100)
     popMatrix()
 
+    pushMatrix()
+    fill(255,0,0)
+    noStroke()
+    translate(x,y-100,z)
+    box(2)
+    popMatrix()
+
+    pushMatrix()
+    fill(255,0,0)
+    noStroke()
+    translate(x-60,y-60,z-60)
+    box(2)
+    popMatrix()
+
+    pushMatrix()
+    fill(255,0,0)
+    noStroke()
+    translate(x+60,y+60,z+60)
+    box(2)
+    popMatrix()
 
 def loadHitboxes(key):
 
@@ -67,6 +87,13 @@ def loadMap(key, xOffset, yOffset, zOffset):
         z += zOffset
         renderBlock(x,y,z,r,g,b)
 
+    pushMatrix()
+    fill(0,0,255)
+    noStroke()
+    translate(346,250,91)
+    box(2)
+    popMatrix()
+
 # def collision(hitboxes, playerX, playerY, playerZ):
 #     for hitbox in hitboxes:
 #         if playerX >= hitbox[0] and playerX hitbox[3]:
@@ -81,8 +108,11 @@ def dotProduct(x1,y1,x2,y2):
 
 def setup():
     size(1000, 700, P3D)
+    noClip()
     # fullScreen()
     # noCursor()
+    global ui
+    ui = createGraphics(1000,700, P2D)
 
     global x,y,z
     x,y,z = 0,0,0
@@ -101,6 +131,9 @@ def setup():
     by = [0,0]
     bz = [0]
     angle = [0]
+
+    global f3State
+    f3State = False
 
 def movementCalc(dir, step, rotation):
     # up=0, down=1, left=2, right=3
@@ -125,37 +158,88 @@ def movementCalc(dir, step, rotation):
     
     return [dx,dy,dz]
 
-def hitboxCalc(rotation, x, y, z):
+def AABB(player, box):
+    # player = [x-20,y-40,z-20, x+20,y+40,z+20]
+    # box = [x1,y1,z1,x2,y2,z2]
+    # check if the player collides with the box
+    if player[0] <= box[3] and player[3] >= box[0] and player[1] <= box[4] and player[4] >= box[1] and player[2] <= box[5] and player[5] >= box[2]:
+        return True
+    else:
+        return False
 
-    # convert rotation if needed for values between 0 and 360
-    rotation = abs(((rotation/360) - floor(rotation/360)) * 360) # INPUT IS RADIANS CONVERT IT FOR THE SHITS AND GIGGLES
+    # if option == 1:
+    #     # check how far the player is in the box
+# 
+    #     # top right corner
+    #     if player[3] <= box[3] and player[5] <= box[5]:
+    #         # return the distance the player is in the box
+    #         return [box[3]-player[3], box[5]-player[5]]
+    #     
+    #     # top left corner
+    #     if player[0] >= box[0] and player[5] <= box[5]:
+    #         # return the distance the player is in the box
+    #         return [player[0]-box[0], box[5]-player[5]]
+    #     
+    #     # bottom right corner
+    #     if player[3] <= box[3] and player[2] >= box[2]:
+    #         # return the distance the player is in the box
+    #         return [box[3]-player[3], player[2]-box[2]]
+    #     
+    #     # bottom left corner
+    #     if player[0] >= box[0] and player[2] >= box[2]:
+    #         # return the distance the player is in the box
+    #         return [player[0]-box[0], player[2]-box[2]]
 
-    # calculate which hitbox is in front of the player
-    # [0,0] [1,0] [1,1]
-    # [0,1] player [1,1]
-    # [0,1] [-1,1] [-1,0]
-    if 0 < rotation < 45:
-        return [1,0]
-    elif 45 <= rotation < 90:
-        return [1,1]
-    elif 90 < rotation < 135:
-        return [0,1]
-    elif 135 <= rotation < 180:
-        return [-1,1]
-    elif 180 < rotation < 225:
-        return [-1,0]
-    elif 225 <= rotation < 270:
-        return [-1,-1]
-    elif 270 < rotation < 315:
-        return [0,-1]
-    elif 315 <= rotation < 360:
-        return [1,-1]
+def hitboxCalc(x, y, z, option=0):
+
+    # Test if the player has collideable objects around them
+    # [-1,1] [0,1] [1,1]
+    # [-1,0] player [1,0]
+    # [-1,-1] [0,-1] [1,-1]
+
+    playerArray = [[-1,1], [0,1], [1,1], [-1,0], [1,0], [-1,-1], [0,-1], [1,-1]]
+    tempArray = []
+    # test if objects around player are collidable and add them to an array
+    for item in playerArray:
+        print(str(floor((x/100))) + "," + str(2) + "," + str(floor((z/100))))
+        hx, hy, hz = gridConvert(int(floor((x/100)+item[1])), int(2), int(floor((z/100)+item[0])))
+        if hitboxes[int(2)][int(int(floor((x/100)+item[1])))][int(floor((z/100)+item[0]))] == 1: # y, x, z
+            tempArray.append([int(int(floor((x/100)+item[1]))),int(2),int(floor((z/100)+item[0]))])
+
+    if option == 0:
+        return tempArray
+    elif option == 1:
+        return len(tempArray)
+
+
 
 
 def gravityCalc():
     global dx,dy,dz
     dy -= 0.1
     return [dx,dy,dz]
+
+def f3(x,y,z,rotation):
+    # information screen
+    global f3State,ui
+
+    # keybind toggle
+    if keyPressed and key == "p":
+        print("f3 toggled")
+        if f3State == False:
+            f3State = True
+        elif f3State == True:
+            f3State = False
+
+    # display information
+    if f3State == True:
+        ui.beginDraw()
+        ui.background(255)
+        ui.textSize(20)
+        ui.textAlign(CENTER,CENTER)
+        ui.fill(255,0,0)
+        ui.text("coordinates: " + str(floor((x+50)/100)) + "," + str(floor(y)) + "," + str(floor((z+50)/100)), 100, 100)
+        ui.endDraw()
 
 def player():
     # player settings
@@ -177,7 +261,7 @@ def player():
             # dx,dy,dz = movement(3,step)
             dx += step
 
-    print("delta coordinates: " + str(dx) + "," + str(dy) + "," + str(dz))
+    ## print("delta coordinates: " + str(dx) + "," + str(dy) + "," + str(dz))
     return [dx,dy,dz]
     # camera(x, y, z, x, y, z, 0, 1, 0)  # Update camera position based on player's movement
 
@@ -190,7 +274,7 @@ def draw():
     #####################
     xCenter = ((float(mouseX) - (float(width)/2)) / float(width) ) * (4*PI)
     yCenter = ((float(mouseY) - (float(height)/2)) / float(height) ) * (2*PI)
-    print("Angle:" + str(360*(xCenter)/2*PI))
+    ## print("Angle:" + str(360*(xCenter)/2*PI))
     rotation = xCenter
     #####################
 
@@ -198,30 +282,106 @@ def draw():
     # localise the player position based on the camera
     dx,dy,dz = player()
 
-    print("x:" + str((x+50)/100))
-    print("z:" + str((z+50)/100))
+    ## print("x:" + str((x+50)/100))
+    ## print("z:" + str((z+50)/100))
     # translate rigid x,y,z to camera x,y,z
     if dz > 0:
         print("forward")
         # check if there is a block in the way https://www.desmos.com/calculator/k0laxz7oob
-        print("x: " + str(int((x+50)+cos(rotation))/100) + " y: " + str(2) + " z: " + str(int((z+50)+sin(rotation))/100))
+        ## print("x: " + str(int((x+50)+cos(rotation))/100) + " y: " + str(2) + " z: " + str(int((z+50)+sin(rotation))/100))
         # lx,lz = hitboxCalc(rotation)
-        if int(hitboxes[int(2)][int((x+50)+cos(rotation))/100][int((z+50)+sin(rotation))/100]) == 0: # y, x, z
+
+        # run matrix coordinates calculations
+        # iX = float(x-floor(x+cos(rotation)))
+        # iZ = float(z-floor(z+sin(rotation)))
+        # print("iX: " + str(iX) + " iZ: " + str(iZ))
+        # if iX >= 1:
+        #     iX = 1
+        # elif iX <= 0:
+        #     iX = -1
+        # elif 0 < iX < 1:
+        #     iX = 0
+        # 
+        # if iZ >= 1:
+        #     iZ = 1
+        # elif iZ <= 0:
+        #     iZ = -1
+        # elif 0 < iZ < 1:
+        #     iZ = 0
+
+        # print("iX: " + str(iX) + " iZ: " + str(iZ))
         
-            # calculate the movement 
+        if hitboxCalc(x,y,z,1) == 0: # y, x, z
+        
+            # calculate the movement      
             dx,dy,dz = movementCalc(0,dz, rotation)
 
         else:
+            
+            # print(rotation)
+            # [0,0] [1,0] [1,1]
+            # [0,1] player [1,1]
+            # [0,1] [-1,1] [-1,0]
 
-            hx, hy, hz = gridConvert(int((x+50)/100)+int(1.05*cos(rotation)), int(2), int(((z+50)/100)+int(1.05*sin(rotation)))) # x y z
+            # [-1,1] [0,1] [1,1]
+            # [-1,0] player [1,0]
+            # [-1,-1] [0,-1] [1,-1]
+            playerArray = [[-1,1], [0,1], [1,1], [-1,0], [1,0], [-1,-1], [0,-1], [1,-1]]
+            tempArray = hitboxCalc(x,y,z)
+            # test if objects around player are collidable and add them to an array
+            for item in playerArray:
+                print(str(floor((x/100))) + "," + str(2) + "," + str(floor((z/100))))
+                hx, hy, hz = gridConvert(int(floor((x/100)+int(item[1]))), int(2), int(floor((z/100)+int(item[0]))))
+                renderBlock(hx,hy,hz,0,255,0)
+                if hitboxes[int(2)][int(int(floor((x/100)+int(item[1]))))][int(floor(((z)/100)+int(item[0])))] == 1: # y, x, z
+                    tempArray.append([int(int(floor((x/100)+int(item[1])))),int(2),int(floor((z/100)+int(item[0])))])
+                
+            
+            print(tempArray)
 
-            # calculate the movement
-            dx,dy,dz = movementCalc(0,dz, rotation)
+            # test if the player will collide with any of the objects
+            tx, ty, tz = movementCalc(0,dz, rotation) # temporary x y z
+            e = 0
+            print("reset dx,dy,dz")
+            for item in tempArray:
+                hx, hy, hz = gridConvert(item[0], item[1], item[2])
+                hx, hy, hz = floor(hx), floor(hy), floor(hz)
+                
+                renderBlock(hx,hy,hz,255,0,0)
+
+                # print("x: " + str(x) + " y: " + str(y) + " z: " + str(z) + " dx: " + str(dx) + " dz: " + str(dz) + " hx: " + str(hx) + " hy: " + str(hy) + " hz: " + str(hz))
+                feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
+                # print("tx: " + str(tx) + " tz: " + str(tz))
+                # print(AABB([((x+(2*tx))),((250)),((z+(tz*2))), ((x+(tx*2))),(250),((z+(tz*2))),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]))
+                if AABB([((x+(4*tx)-10)),((200)),((z+(tz*4)-10)), ((x+(tx*4)+10)),(300),((z+(tz*4)+10)),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]) == True:
+                    print("collision")
+                    dx,dy,dz = 0,0,0
+                else:
+                    print("no")
+                    e += 1
+                    # dx,dy,dz = 0,0,0
+            
+            # only execute the movement if there are no collisions
+            if e == len(tempArray):
+                dx,dy,dz = movementCalc(0,dz, rotation)
+
+            # hx, hy, hz = gridConvert(int(floor(((x+50)/100)+cos(rotation))), int(2), int(floor(((z+50)/100)+sin(rotation)))) # x y z
+            # print(str(hx) + "," + str(hy) + "," + str(hz))
+            # renderBlock(hx,hy,hz,255,255,255)
+# 
+            # # print(str(x) + "," + str(y) + "," + str(z))
+            # distance = 75 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
+            # if AABB([((x+dx+distance)-10),((250)),((z+dz+distance)-10), ((x+dx+distance)+10),(250+40),((z+dz+distance)+10),], [hx,hy,hz,hx+100,hy+100,hz+100]) == True:
+            #     print("collision")
+            #     dx,dy,dz = 0,0,0
+# 
+            # # calculate the movement
+            # dx,dy,dz = movementCalc(0,dz, rotation)
 
             # ensure the player is not in the block
-            if hx <= (x+dx) <= hx+100 or hz <= (z+dz) <= hz+100:
-                print("collision")
-                dx,dy,dz = 0,0,0
+            # if hx <= (x+dx) <= hx+100 or hz <= (z+dz) <= hz+100:
+            #     print("collision")
+            #     dx,dy,dz = 0,0,0
 
     elif dz < 0:
         print("backward")
@@ -244,16 +404,28 @@ def draw():
 
     # run gravity calculations
     
-
+    # execute camera movement
     beginCamera()
-    camera(x, yCenter, z, (50*cos(xCenter)) + x, (50*yCenter), (50*sin(xCenter)) + z, 0, 1, 0)
-    print(yCenter)
+    # camera(x-60, yCenter, z-60, (50*cos(xCenter)) + x-60, (50*yCenter), (50*sin(xCenter)) + z-60, 0, 1, 0) # WHY THE FUCK DO YOU NEED -60?!?!?!
+    camera(x, yCenter, z, (50*cos(xCenter)) + x, (50*yCenter), (50*sin(xCenter)) + z, 0, 1, 0) 
+    ## print(yCenter)
     perspective()
     endCamera()
 
+    # apply player hitbox movement
+    # x - x+50, y - y+50, z - z+50
+
+    print(rotation)
     print(z)
     print(x)
     # Load the map
     loadMap(0, 0, 0, 0)
 
+    # run ui commands
+    # f3(x,y,z,rotation)
+    # pushMatrix()
+    # image(ui,0,0)
+    # translate(x,z,0)
+    # rotateZ((2*PI) - rotation)
+    # popMatrix()
 
