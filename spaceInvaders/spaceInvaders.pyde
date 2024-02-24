@@ -75,8 +75,9 @@ def setup():
     # fullScreen()
     # noCursor()
     
-    global ui
+    global ui, playerModel
     ui = createGraphics(1000,700, P2D)
+    playerModel = createGraphics(1000,700, P2D)
 
     global x,y,z
     x,y,z = 50,0,50
@@ -84,8 +85,9 @@ def setup():
     global dx,dy,dz
     dx,dy,dz = 0,0,0
 
-    global time2
+    global time2, time3
     time2 = 1000
+    time3 = 0
 
     global hitboxes
     hitboxes = loadHitboxes(0) # hitboxes only need to be loaded once
@@ -101,6 +103,10 @@ def setup():
 
     global f3State
     f3State = False
+
+    global image1, image2
+    image1 = loadImage("playerModel/AR/idle.png")
+    image2 = loadImage("crosshair-1.png")
 
 def movementCalc(dir, step, rotation):
     # up=0, down=1, left=2, right=3
@@ -178,25 +184,63 @@ def hitboxCalc(x, y, z, setting=0, option=0):
 
 def f3(x,y,z,rotation):
     # information screen
-    global f3State,ui
+    global f3State,ui,time3
 
     # keybind toggle
     if keyPressed and key == "p":
         print("f3 toggled")
-        if f3State == False:
-            f3State = True
-        elif f3State == True:
-            f3State = False
+        # add interval to prevent multiple keypresses
+        if millis() - time3 > 100:
+            time3 = millis()
+            if f3State == False:
+                f3State = True
+            elif f3State == True:
+                f3State = False
 
     # display information
     if f3State == True:
+        # setup the ui
         ui.beginDraw()
-        ui.background(255)
-        ui.textSize(20)
-        ui.textAlign(CENTER,CENTER)
+        ui.clear()
+        ui.textSize(30)
+        ui.textAlign(RIGHT)
         ui.fill(255,0,0)
-        ui.text("coordinates: " + str(floor((x+50)/100)) + "," + str(floor(y)) + "," + str(floor((z+50)/100)), 100, 100)
+        ui.text("coordinates: " + str(floor((x+50)/100)) + "," + str(-1*floor(y/100)) + "," + str(floor((z+50)/100)), 300, 30)
+        ui.text("rotation: " + str(round(rotation*(180/PI))), 220, 70)
         ui.endDraw()
+    elif f3State == False:
+        # setup the ui
+        ui.beginDraw()
+        ui.clear()
+        ui.endDraw()
+
+    # display the ui
+    pushMatrix()
+    camera()
+    hint(DISABLE_DEPTH_TEST)
+    noLights()
+    image(ui,0,0)
+    hint(ENABLE_DEPTH_TEST)
+    popMatrix()
+
+def playerUi():
+    # player model
+    global playerModel, image1, image2
+
+    playerModel.beginDraw()
+    playerModel.clear()
+    playerModel.image(image1, 0, 0, width, height)
+    playerModel.image(image2, (width/2)-50, (height/2)-50, 30, 30)
+    playerModel.endDraw()
+
+    # display the player model
+    pushMatrix()
+    camera()
+    hint(DISABLE_DEPTH_TEST)
+    noLights()
+    image(playerModel,0,0) 
+    hint(ENABLE_DEPTH_TEST)
+    popMatrix()
 
 def player():
     # player settings
@@ -219,7 +263,8 @@ def player():
         if key == "d":
             # dx,dy,dz = movement(3,step)
             dx += step
-
+    
+    # jump
     if (keyPressed == True and key == " ") or (millis() - time2) < 500:
         if (keyPressed == True and key == " " and (millis() - time2) > 500):
             if hitboxCalc(x,y,z,1,1) != 0:
@@ -331,13 +376,13 @@ def draw():
 
         if hitboxCalc(x,y,z,1) == 0: # y, x, z
             # calculate the movement      
-            dx,dy,dz = movementCalc(1,dz, rotation)
+            dx,dz = movementCalc(1,dz, rotation)
         else:
             # test if objects around player are collidable and add them to an array
             tempArray = hitboxCalc(x,y,z)
 
             # test if the player will collide with any of the objects
-            tx, ty, tz = movementCalc(1,dz, rotation) # temporary x y z
+            tx,tz = movementCalc(1,dz, rotation) # temporary x y z
             e = 0
             for item in tempArray:
                 hx, hy, hz = gridConvert(item[0], item[1], item[2])
@@ -349,9 +394,9 @@ def draw():
                 feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
                 # print("tx: " + str(tx) + " tz: " + str(tz))
                 # print(AABB([((x+(2*tx))),((250)),((z+(tz*2))), ((x+(tx*2))),(250),((z+(tz*2))),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]))
-                if AABB([((x+(4*tx)-10)),((200)),((z+(tz*4)-10)), ((x+(tx*4)+10)),(300),((z+(tz*4)+10)),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]) == True:
+                if AABB([((x+(4*tx)-10)),((y)),((z+(tz*4)-10)), ((x+(tx*4)+10)),(y+200),((z+(tz*4)+10)),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]) == True:
                     print("collision")
-                    dx,dy,dz = 0,0,0
+                    dx,dz = 0,0
                 else:
                     print("no")
                     e += 1
@@ -359,20 +404,20 @@ def draw():
             
             # only execute the movement if there are no collisions
             if e == len(tempArray):
-                dx,dy,dz = movementCalc(1,dz, rotation)
+                dx,dz = movementCalc(1,dz, rotation)
 
     elif dx > 0:
         print("right")
 
         if hitboxCalc(x,y,z,1) == 0: # y, x, z
             # calculate the movement      
-            dx,dy,dz = movementCalc(2,dx, rotation)
+            dx,dz = movementCalc(2,dx, rotation)
         else:
             # test if objects around player are collidable and add them to an array
             tempArray = hitboxCalc(x,y,z)
 
             # test if the player will collide with any of the objects
-            tx, ty, tz = movementCalc(2,dx, rotation) # temporary x y z
+            tx,tz = movementCalc(2,dx, rotation) # temporary x y z
             e = 0
             for item in tempArray:
                 hx, hy, hz = gridConvert(item[0], item[1], item[2])
@@ -384,9 +429,9 @@ def draw():
                 feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
                 # print("tx: " + str(tx) + " tz: " + str(tz))
                 # print(AABB([((x+(2*tx))),((250)),((z+(tz*2))), ((x+(tx*2))),(250),((z+(tz*2))),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]))
-                if AABB([((x+(4*tx)-10)),((200)),((z+(tz*4)-10)), ((x+(tx*4)+10)),(300),((z+(tz*4)+10)),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]) == True:
+                if AABB([((x+(4*tx)-10)),((y)),((z+(tz*4)-10)), ((x+(tx*4)+10)),(y+200),((z+(tz*4)+10)),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]) == True:
                     print("collision")
-                    dx,dy,dz = 0,0,0
+                    dx,dz = 0,0
                 else:
                     print("no")
                     e += 1
@@ -394,20 +439,20 @@ def draw():
             
             # only execute the movement if there are no collisions
             if e == len(tempArray):
-                dx,dy,dz = movementCalc(2,dx, rotation)
+                dx,dz = movementCalc(2,dx, rotation)
 
     elif dx < 0:
         print("left")
         
         if hitboxCalc(x,y,z,1) == 0: # y, x, z
             # calculate the movement      
-            dx,dy,dz = movementCalc(3,dx, rotation)
+            dx,dz = movementCalc(3,dx, rotation)
         else:
             # test if objects around player are collidable and add them to an array
             tempArray = hitboxCalc(x,y,z)
 
             # test if the player will collide with any of the objects
-            tx, ty, tz = movementCalc(3,dx, rotation) # temporary x y z
+            tx, tz = movementCalc(3,dx, rotation) # temporary x y z
             e = 0
             for item in tempArray:
                 hx, hy, hz = gridConvert(item[0], item[1], item[2])
@@ -419,9 +464,9 @@ def draw():
                 feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
                 # print("tx: " + str(tx) + " tz: " + str(tz))
                 # print(AABB([((x+(2*tx))),((250)),((z+(tz*2))), ((x+(tx*2))),(250),((z+(tz*2))),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]))
-                if AABB([((x+(4*tx)-10)),((200)),((z+(tz*4)-10)), ((x+(tx*4)+10)),(300),((z+(tz*4)+10)),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]) == True:
+                if AABB([((x+(4*tx)-10)),((y)),((z+(tz*4)-10)), ((x+(tx*4)+10)),(y+200),((z+(tz*4)+10)),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]) == True:
                     print("collision")
-                    dx,dy,dz = 0,0,0
+                    dx,dz = 0,0
                 else:
                     print("no")
                     e += 1
@@ -429,7 +474,7 @@ def draw():
             
             # only execute the movement if there are no collisions
             if e == len(tempArray):
-                dx,dy,dz = movementCalc(3,dx, rotation)
+                dx,dz = movementCalc(3,dx, rotation)
 
 
     x += dx
@@ -454,10 +499,8 @@ def draw():
     loadMap(0, 0, 0, 0)
 
     # run ui commands
-    # f3(x,y,z,rotation)
-    # pushMatrix()
-    # image(ui,0,0)
-    # translate(x,z,0)
-    # rotateZ((2*PI) - rotation)
-    # popMatrix()
+    f3(x,y,z,rotation)
+    playerUi()
+
+
 
