@@ -28,10 +28,10 @@ def renderBlock(x,y,z,r,g,b):
 def loadHitboxes(key):
 
     # Create a 3D array with dimensions 50x50x10, or as x,z,y
-    hitboxes = [[[0 for _ in range(20)] for _ in range(20)] for _ in range(20)]
+    hitboxes = [[[0 for _ in range(50)] for _ in range(50)] for _ in range(50)]
 
     # Define the maps in a array
-    maps = ["test", "test2", "flight"]
+    maps = ["test", "test6", "de_dust2", "test3"]
 
     # Load the map
     mapData = loadStrings("maps/" + maps[key] + ".txt")
@@ -49,22 +49,24 @@ def loadMap(key, xOffset, yOffset, zOffset):
     # background(0)
 
     # Define the maps in a array
-    maps = ["test", "test2", "flight"]
+    maps = ["test", "test6", "de_dust2", "test3"]
 
     # Load the map
     mapData = loadStrings("maps/" + maps[key] + ".txt")
 
+    benchmarkStart1 = millis()
     for line in mapData:
         # split and convert the data
         data = str(line).strip("[]").split(",")
         x,y,z = gridConvert(int(data[0]), int(data[1]), int(data[2]))
         r,g,b = int(data[3]), int(data[4]), int(data[5])
-
         # Render the block
         x += xOffset
         y += yOffset
         z += zOffset
         renderBlock(x,y,z,r,g,b)
+        
+    print("This frame took " + str(millis() - benchmarkStart1) + " miliseconds to complete")
 
 def dotProduct(x1,y1,x2,y2):
     return (float(x1)*float(x2)) + (float(y1)*float(y2))
@@ -74,23 +76,27 @@ def setup():
     noClip()
     # fullScreen()
     # noCursor()
-    
+    frameRate(60)
+
     global ui, playerModel
     ui = createGraphics(1000,700, P2D)
     playerModel = createGraphics(1000,700, P2D)
 
     global x,y,z
-    x,y,z = 50,0,50
+    x,y,z = 300,0,400
 
     global dx,dy,dz
     dx,dy,dz = 0,0,0
 
-    global time2, time3
+    global time2, time3, time, time4, time5
+    time = 0
     time2 = 1000
     time3 = 0
+    time4 = 0
+    time5 = 0
 
     global hitboxes
-    hitboxes = loadHitboxes(0) # hitboxes only need to be loaded once
+    hitboxes = loadHitboxes(2) # hitboxes only need to be loaded once
     print(hitboxes[2][4][0])
     # exit()
 
@@ -107,6 +113,46 @@ def setup():
     global image1, image2
     image1 = loadImage("playerModel/AR/idle.png")
     image2 = loadImage("crosshair-1.png")
+
+    global moveUp, moveDown, moveLeft, moveRight, jumping
+    moveUp, moveDown, moveLeft, moveRight, jumping = False, False, False, False, False
+
+    global entity
+    entity = []
+
+    global wave
+    wave = 0
+
+    global zombie
+    zombie = loadShape("low_poly_zombie.obj")
+
+
+# keybinds
+def keyPressed():
+    global moveUp, moveDown, moveLeft, moveRight, jumping
+    if key == "w":
+        moveUp = True
+    if key == "s":
+        moveDown = True
+    if key == "a":
+        moveLeft = True
+    if key == "d":
+        moveRight = True
+    if key == " ":
+        jumping = True
+
+def keyReleased():
+    global moveUp, moveDown, moveLeft, moveRight, jumping
+    if key == "w":
+        moveUp = False
+    if key == "s":
+        moveDown = False
+    if key == "a":
+        moveLeft = False
+    if key == "d":
+        moveRight = False
+    if key == " ":
+        jumping = False
 
 def movementCalc(dir, step, rotation):
     # up=0, down=1, left=2, right=3
@@ -131,6 +177,119 @@ def movementCalc(dir, step, rotation):
     
     return [dx,dz]
 
+def Astar(ySlice, start, end):
+
+    # written with reference to https://youtu.be/-L-WgKMFuhE?si=UlBWzKz5x3yjQHLc&t=455
+    # ySlice is the slice of the 3D array
+    # start [x,y,z]
+    # end [x,y,z]
+
+    openList = [] # [x,y,z,f,g,h,parent]
+    closedList = []
+    blank = 0,0,0
+    path = []
+
+    # debug
+    # start = 1,0,1
+    # end = 3,0,9
+ 
+    # ySlice = [[0,0,0,0,0,0,0,0,0,0,0]
+    #          ,[0,0,0,0,0,0,0,1,1,0,0]
+    #          ,[0,0,1,1,1,1,1,1,1,0,0]
+    #          ,[0,0,1,0,0,0,1,1,1,0,0]
+    #          ,[0,0,0,0,0,0,0,0,0,0,0]
+    #          ,[0,0,0,0,0,0,0,0,0,0,0]]
+    
+    # add the start node to the open list
+    openList.append([int(start[0]),int(start[1]),int(start[2]),0,0,0,blank])
+
+
+    while openList:
+        
+        # sort list by lowest f value 
+        openList.sort(key=lambda x: x[3])
+
+
+        # set current node from the open list
+        current = openList[0]
+        # remove the current node from the open list
+        openList.remove(current)
+        # add the current node to the closed list
+        closedList.append(current)
+
+        # check if the current node is the end node
+        if current[0] == end[0] and current[1] == end[1] and current[2] == end[2]:
+            print("path found")
+            # generate the path
+            if current[0] == end[0] and current[1] == end[1] and current[2] == end[2]:
+                path.append([current[0],current[1],current[2]])
+                
+                # search for the coordinates in closedList and then set the closed list item as the current node
+                for item in closedList:
+                    if item[0] == current[6][0] and item[1] == current[6][1] and item[2] == current[6][2]:
+                        path.append([item[0],item[1],item[2]])
+                        current = item
+
+            while closedList:
+                for item in closedList:
+                    if item[0] == current[6][0] and item[1] == current[6][1] and item[2] == current[6][2]:
+                        path.append([item[0],item[1],item[2]])
+                        current = item
+                
+                if current[0] == start[0] and current[2] == start[2]:
+                    #print(closedList)    
+                    return path
+        
+        # generate the children of the current node
+        for i in range(-1,2):
+            for j in range(-1,2):
+                # check if the child is the current node
+                try:
+                    if i == 0 and j == 0:
+                        continue
+                    # ensure coordinates are not negative
+                    if int(current[0])+i < 0 or int(current[2]+j) < 0:
+                        continue
+
+                    # check if the child is collidable
+                    if ySlice[int(current[0])+i][int(current[2]+j)] == 1:                
+                        continue
+
+                    # check if the child is within the bounds of the grid
+                    if ySlice[int(current[0])+i][int(current[2]+j)] != 0:
+                        continue
+
+                    # check if the child is in the closed list
+                    tolerance = 0
+                    for block in closedList:
+                        if block[0] == int(current[0])+i and block[2] == int(current[2]+j):
+                            tolerance += 1
+                            continue
+                    if tolerance >= 1:
+                        continue
+
+                    # check if the child is in the open list
+                    tolerance = 0
+                    for block in openList:
+                        if block[0] == int(current[0])+i and block[2] == int(current[2]+j):
+                            tolerance += 1
+                            continue
+                    if tolerance >= 1:
+                        continue
+                    
+                except IndexError:
+                    continue
+
+                # calculate the f,g,h values
+                g = current[4] + sqrt(i**2 + j**2)
+                h = sqrt((current[0]+i-end[0])**2 + (current[2]+j-end[2])**2)
+                f = (g*10) + (h*10)
+                parent = current[0],current[1],current[2]
+
+                # add the child to the open list
+                #print("child: " + str([int(current[0])+i,current[1],int(current[2]+j),f,g,h,parent]))
+                openList.append([int(current[0])+i,current[1],int(current[2]+j),f,g,h,parent])
+        
 def AABB(player, box):
     # player = [x-20,y-40,z-20, x+20,y+40,z+20]
     # box = [x1,y1,z1,x2,y2,z2]
@@ -139,6 +298,66 @@ def AABB(player, box):
         return True
     else:
         return False
+
+def raycast(x,y,z, angleX, angleY):
+    # angleX and angleY are in radians (yaw and pitch)
+    # x,y,z are the players coordinates
+    raycastDistance = 0
+
+    global entity
+
+    ## crosshair offsets
+    angleX -= 0.06
+    angleY -= 0.06
+    # calculate the direction of the ray
+    dx = cos(angleX) * cos(angleY)
+    dy = sin(angleY)
+    dz = sin(angleX) * cos(angleY)
+
+    while raycastDistance < 3000:
+        # calculate the position of the ray
+        rx = x + (dx * raycastDistance)
+        ry = (y) + (dy * raycastDistance)
+        rz = z + (dz * raycastDistance)
+
+        # check if the ray is colliding with a block or entity
+        e = 0
+        for item in entity:
+            ex,ey,ez,rotation,type,id = item.strip("[]").split(",")
+            ex,ey,ez = gridConvert(int(ex),int(ey),int(ez))
+            rotation,type,id = float(rotation),int(type),int(id)
+            # pushMatrix()
+            # fill(0,255,0)
+            # translate(ex-60,ey-50,ez-60)
+            # box(20)
+            # popMatrix()
+            # pushMatrix()
+            # fill(0,255,0)
+            # translate(ex+50,ey+140,ez+50)
+            # box(20)
+            # popMatrix()
+# 
+            # pushMatrix()
+            # fill(0,0,255)
+            # translate(rx,ry,rz)
+            # box(20)
+            # popMatrix()
+
+            if AABB([(rx-10),(ry-10),(rz-10), (rx+10),(ry+10),(rz+10)], [(ex-60),(ey-50),(ez-60), (ex+50),(ey+140),(ez+50)]) == True:
+                e += 1
+
+        try:
+            if hitboxes[int(floor(ry/100))][int(floor(rx/100))][int(floor(rz/100))] == 1 or e != 0:
+                if e != 0:
+                    print("entity collision")
+                if hitboxes[int(floor(ry/100))][int(floor(rx/100))][int(floor(rz/100))] == 1:
+                    print("block collision")
+                return [rx,ry,rz]
+            else:
+                raycastDistance += 100
+        except IndexError: 
+                raycastDistance = 3000
+                pass
 
 def hitboxCalc(x, y, z, setting=0, option=0):
 
@@ -156,25 +375,40 @@ def hitboxCalc(x, y, z, setting=0, option=0):
         w = 0
         while w != 300:
             for item in playerArray:
-                if hitboxes[int(floor((y+w)/100))][int(int(floor((x/100)+item[1])))][int(floor((z/100)+item[0]))] == 1: # y, x, z
-                    tempArray.append([int(int(floor((x/100)+item[1]))),int(floor((y+w)/100)),int(floor((z/100)+item[0]))])
+                try:
+                    if hitboxes[int(floor((y+w)/100))][int(int(floor((x/100)+item[1])))][int(floor((z/100)+item[0]))] == 1: # y, x, z
+                        tempArray.append([int(int(floor((x/100)+item[1]))),int(floor((y+w)/100)),int(floor((z/100)+item[0]))])
+                except IndexError: 
+                    pass
             w += 100
 
     elif setting == 1:
         # check below the player
         for item in playerArray:
-            if hitboxes[int(floor((y+300)/100))][int(int(floor((x/100)+item[1])))][int(floor((z/100)+item[0]))] == 1: # y, x, z
-                tempArray.append([int(int(floor((x/100)+item[1]))),int(floor((y+300)/100)),int(floor((z/100)+item[0]))])
-        if hitboxes[int(floor((y+300)/100))][int(floor((x/100)))][int(floor((z/100)))] == 1:
-            tempArray.append([int(floor((x/100))),int(floor((y+300)/100)),int(floor((z/100)))])
+            try:
+                if hitboxes[int(floor((y+300)/100))][int(int(floor((x/100)+item[1])))][int(floor((z/100)+item[0]))] == 1: # y, x, z
+                    tempArray.append([int(int(floor((x/100)+item[1]))),int(floor((y+300)/100)),int(floor((z/100)+item[0]))])
+            except IndexError: 
+                pass
+        try:
+            if hitboxes[int(floor((y+300)/100))][int(floor((x/100)))][int(floor((z/100)))] == 1:
+                tempArray.append([int(floor((x/100))),int(floor((y+300)/100)),int(floor((z/100)))])
+        except IndexError: 
+                pass
     
     elif setting == 2:
         # check above the player
         for item in playerArray:
-            if hitboxes[int(floor((y-100)/100))][int(int(floor((x/100)+item[1])))][int(floor((z/100)+item[0]))] == 1: # y, x, z
-                tempArray.append([int(floor((x/100)+item[1])),int(floor((y-100)/100)),int(floor((z/100)+item[0]))])
-        if hitboxes[int(abs(floor((y-100)/100)))][int(floor((x/100)))][int(floor((z/100)))] == 1:
-            tempArray.append([int(floor((x/100))),int(abs(floor((y-100)/100))),int(floor((z/100)))])
+            try:
+                if hitboxes[int(floor((y-100)/100))][int(int(floor((x/100)+item[1])))][int(floor((z/100)+item[0]))] == 1: # y, x, z
+                    tempArray.append([int(floor((x/100)+item[1])),int(floor((y-100)/100)),int(floor((z/100)+item[0]))])
+            except IndexError: 
+                pass
+        try:
+            if hitboxes[int(abs(floor((y-100)/100)))][int(floor((x/100)))][int(floor((z/100)))] == 1:
+                tempArray.append([int(floor((x/100))),int(abs(floor((y-100)/100))),int(floor((z/100)))])
+        except IndexError: 
+                pass
 
     # process output
     if option == 0:
@@ -207,6 +441,7 @@ def f3(x,y,z,rotation):
         ui.fill(255,0,0)
         ui.text("coordinates: " + str(floor((x+50)/100)) + "," + str(-1*floor(y/100)) + "," + str(floor((z+50)/100)), 300, 30)
         ui.text("rotation: " + str(round(rotation*(180/PI))), 220, 70)
+        ui.text("fps: " + str(round(frameRate)), 220, 110)
         ui.endDraw()
     elif f3State == False:
         # setup the ui
@@ -223,7 +458,7 @@ def f3(x,y,z,rotation):
     hint(ENABLE_DEPTH_TEST)
     popMatrix()
 
-def playerUi():
+def playerUi(timer=0,wave=0):
     # player model
     global playerModel, image1, image2
 
@@ -233,6 +468,22 @@ def playerUi():
     playerModel.image(image2, (width/2)-50, (height/2)-50, 30, 30)
     playerModel.endDraw()
 
+    if timer != 0:
+        playerModel.beginDraw()
+        playerModel.fill(0,0,0)
+        playerModel.textSize(30)
+        playerModel.textAlign(CENTER)
+        playerModel.text(timer, (width/2), 50)
+        playerModel.endDraw()
+    
+    if wave != 1:
+        playerModel.beginDraw()
+        playerModel.fill(0,0,0)
+        playerModel.textSize(30)
+        playerModel.textAlign(CENTER)
+        playerModel.text("wave: " + str(wave), (width/2), 100)
+        playerModel.endDraw()
+    
     # display the player model
     pushMatrix()
     camera()
@@ -245,28 +496,24 @@ def playerUi():
 def player():
     # player settings
 
-    global time2
+    global time2, moveUp, moveDown, moveLeft, moveRight, jumping
 
     dx,dy,dz = 0,0,0
     step = 7.5
     # keyboard controls
-    if keyPressed:
-        if key == "w":
-            # dx,dy,dz = movementCalc(0,step)
-            dz += step
-        if key == "s":
-            # dx,dy,dz = movementCalc(1,step) 
-            dz -= step
-        if key == "a":
-            # dx,dy,dz = movement(2,step)
-            dx -= step
-        if key == "d":
-            # dx,dy,dz = movement(3,step)
-            dx += step
+    if moveUp == True:
+        dz += step
+    if moveDown == True:
+        dz -= step
+    if moveLeft == True:
+        dx -= step
+    if moveRight == True:
+        dx += step
+
     
     # jump
-    if (keyPressed == True and key == " ") or (millis() - time2) < 500:
-        if (keyPressed == True and key == " " and (millis() - time2) > 500):
+    if (jumping == True) or (millis() - time2) < 500:
+        if (jumping == True and (millis() - time2) > 500):
             if hitboxCalc(x,y,z,1,1) != 0:
                 print("timer reset")
                 time2 = millis()
@@ -284,19 +531,74 @@ def player():
     return [dx,dy,dz]
     # camera(x, y, z, x, y, z, 0, 1, 0)  # Update camera position based on player's movement
 
+def spawnZombies(entity):
+    
+    # zombie settings
+    for item in entity:
+        x,y,z,rotation,type,id = item.strip("[]").split(",")
+        x,y,z = gridConvert(int(x),int(y),int(z))
+        rotation,type,id = float(rotation),int(type),int(id)
+        if type == 0:
+            # regular zombie
+
+            # render the zombie
+            print("zombie at " + str(x) + "," + str(y) + "," + str(z) + " rotation: " + str(rotation))
+            pushMatrix()
+            translate(x,y+160,z)
+            rotateY(rotation)
+            rotateX(PI)
+            scale(60)
+            shape(zombie)
+            popMatrix()
+
+            #renderBlock(x,y,z,255,0,0)
+
+def gameManager(setup=False):
+    global time4, time5, wave, entity
+    # if being called for the first time
+    if setup == True:
+        # start timer
+        time4 = millis()
+        wave = 1
+
+    # spawnable locations
+    locations = [[3,13,29],[4,13,29],[5,13,29],[24,13,18],[24,13,19],[24,13,20],[24,11,10],[24,11,11],[24,11,12]]
+    if millis() - time4 < 10000:
+        playerUi(timer=(10 - ((millis() - time4)/1000))) # display the player a countdown timer
+    else:
+        # start the game loop
+        if entity == [] and time5 == 0:
+            time5 = millis()
+        
+        # display wave number for 2 seconds
+        if millis() - time5 < 2000:
+            playerUi(wave=wave) # display the player the wave number
+        # then spawn zombies
+        elif (millis() - time5 > 2000) and entity == []:
+            # spawn zombies
+            wave += 1
+            for i in range(10):
+                print(locations[int(random(0,9))][1])
+                randomId = int(random(0,9))
+                entity.append("[" + str(locations[randomId][0]) + "," + str(locations[randomId][1]) + "," + str(locations[randomId][2]) + "," + str(int(random((-2*PI),(2*PI)))) + "," + str(0) + "," + str(i) + "]") # [x,y,z,rotation,type,id]
+
 
 def draw():
 
-    background(0)
+    benchmarkStart = millis()
 
+    # lights()
+    background(58, 57, 63)
+    
     global scaling_factor, buffer, bx, by, bz, angle, rotation, x, y, z, hitboxes, time
-    # Define camera math
-    #####################
+    # Define camera mathww
     xCenter = ((float(mouseX) - (float(width)/2)) / float(width) ) * (4*PI)
     yCenter = ((float(mouseY) - (float(height)/2)) / float(height) ) * (2*PI)
     ## print("Angle:" + str(360*(xCenter)/2*PI))
     rotation = xCenter
     #####################
+
+    print(raycast(x,y,z,xCenter,yCenter))
 
     # get hitboxes
     # localise the player position based on the camera
@@ -308,6 +610,7 @@ def draw():
     if hitboxCalc(x,y,z,1,1) >= 1: # y, x, z
         time = millis() # set time since last on ground
         print("set time")
+
 
     if hitboxCalc(x,y,z,1,1) == 0: # y, x, z
         if dy == 0:
@@ -481,7 +784,6 @@ def draw():
     z += dz
     y += dy
 
-    
     # execute camera movement
     beginCamera()
     # camera(x-60, yCenter, z-60, (50*cos(xCenter)) + x-60, (50*yCenter), (50*sin(xCenter)) + z-60, 0, 1, 0) # WHY THE FUCK DO YOU NEED -60?!?!?!
@@ -496,11 +798,24 @@ def draw():
     print("rotation:" + str(rotation))
     print("x: " + str(x) + " y: " + str(y) + " z: " + str(z))
     # Load the map
-    loadMap(0, 0, 0, 0)
+    loadMap(2, 0, 0, 0)
+
+    # run game manager function
+    gameManager()
+
+    # load zombies
+    spawnZombies(entity)
+
+    start = 18,14,24
+    end = 4,14,26 
+    benchmarkStartAstar = millis()
+    print(Astar(hitboxes[14],start,end))
+    print("This frame took " + str(millis() - benchmarkStartAstar) + " miliseconds to complete")
+    #exit()
 
     # run ui commands
     f3(x,y,z,rotation)
     playerUi()
 
 
-
+    print("This frame took " + str(millis() - benchmarkStart) + " miliseconds to complete")
