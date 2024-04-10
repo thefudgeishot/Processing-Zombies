@@ -20,19 +20,7 @@ def renderBlock(x,y,z,r,g,b):
     # block settings
     pushMatrix()
     fill(r,g,b)
-    #noStroke()
-    offset = 20
-    rO,gO,bO = offset,offset,offset
-    if r-offset <= 0:
-        rO = 0 
-    if g-offset <= 0:
-        gO = 0
-    if b-offset <= 0:
-        bO = 0
-
-    stroke(r-rO,g-gO,b-bO)
-
-    strokeWeight(2) # DONT GO OVER 2 (causes clipping)
+    noStroke()
     translate(x,y,z)
     box(100)
     popMatrix()
@@ -106,11 +94,15 @@ def dotProduct(x1,y1,x2,y2):
     return (float(x1)*float(x2)) + (float(y1)*float(y2))
 
 def setup():
+    size(1000, 700, P3D)
+    noClip()
+    # fullScreen()
+    # noCursor()
+    frameRate(60)
 
-    global ui, playerModel, dmgOverlay
-    ui = createGraphics(width,height, P2D)
-    playerModel = createGraphics(width,height, P2D)
-    dmgOverlay = createGraphics(width,height, P2D)
+    global ui, playerModel
+    ui = createGraphics(1000,700, P2D)
+    playerModel = createGraphics(1000,700, P2D)
 
     global x,y,z
     x,y,z = 300,0,400
@@ -118,14 +110,12 @@ def setup():
     global dx,dy,dz
     dx,dy,dz = 0,0,0
 
-    global time2, time3, time, time4, time5, time6, time7
+    global time2, time3, time, time4, time5
     time = 0
     time2 = 1000
     time3 = 0
     time4 = 0
     time5 = 0
-    time6 = 0
-    time7 = 0
 
     global hitboxes
     hitboxes = loadHitboxes(2) # hitboxes only need to be loaded once
@@ -143,100 +133,28 @@ def setup():
     angle = [0]
 
     global f3State
-    f3State = False
+    f3State = True
 
-    global image1, image2, image3
+    global image1, image2
     image1 = loadImage("playerModel/AR/idle.png")
     image2 = loadImage("crosshair-1.png")
-    image3 = loadImage("playerModel/damageOverlay.png")
 
-    global arSequence, arIndex
-
-    arSequence = []
-
-    arSequence.append(loadImage("playerModel/AR/shoot/frame-0099.png"))
-    arSequence.append(loadImage("playerModel/AR/shoot/frame-0100.png"))
-    arSequence.append(loadImage("playerModel/AR/shoot/frame-0101.png"))
-    arSequence.append(loadImage("playerModel/AR/shoot/frame-0102.png"))
-    arSequence.append(loadImage("playerModel/AR/shoot/frame-0103.png"))
-    arSequence.append(loadImage("playerModel/AR/shoot/frame-0104.png"))
-    arSequence.append(loadImage("playerModel/AR/shoot/frame-0105.png"))
-
-    arIndex = 0
-
-    global arRSequence, arRIndex
-
-    arRSequence = []
-
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0110.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0111.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0112.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0113.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0114.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0115.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0116.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0117.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0118.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0119.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0120.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0121.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0122.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0123.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0124.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0125.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0126.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0127.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0128.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0129.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0130.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0131.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0132.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0133.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0134.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0135.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0136.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0137.png"))
-    arRSequence.append(loadImage("playerModel/AR/reload/frame-0138.png"))
-
-    arRIndex = 0
-
-    global cAmmo, tAmmo, health
-    cAmmo = 30
-    tAmmo = 60
-    health = 100
-
-    global moveUp, moveDown, moveLeft, moveRight, jumping, shooting, reloading
-    moveUp, moveDown, moveLeft, moveRight, jumping, shooting, reloading = False, False, False, False, False, False, False
+    global moveUp, moveDown, moveLeft, moveRight, jumping
+    moveUp, moveDown, moveLeft, moveRight, jumping = False, False, False, False, False
 
     global entity
     entity = []
 
-    global emitters
-    emitters = []
-
-    global ammoBoxes
-    ammoBoxes = []
-
     global wave
     wave = 0
 
-    global zombie, ammoBox
+    global zombie
     zombie = loadShape("low_poly_zombie.obj")
-    ammoBox = loadShape("ammoPickup.obj")
-
-    global path_cache
-    path_cache = {}
-
-    size(1000, 700, P3D)
-    noClip()
-    fullScreen()
-    noCursor()
-    frameRate(60)
 
 
 # keybinds
 def keyPressed():
-    global moveUp, moveDown, moveLeft, moveRight, jumping, reloading
+    global moveUp, moveDown, moveLeft, moveRight, jumping
     if key == "w":
         moveUp = True
     if key == "s":
@@ -247,8 +165,6 @@ def keyPressed():
         moveRight = True
     if key == " ":
         jumping = True
-    if key == "r":
-        reloading = True
 
 def keyReleased():
     global moveUp, moveDown, moveLeft, moveRight, jumping
@@ -262,17 +178,6 @@ def keyReleased():
         moveRight = False
     if key == " ":
         jumping = False
-
-def mousePressed():
-
-    global shooting, cAmmo
-
-    if cAmmo > 0:
-        shooting = True
-
-def mouseReleased():
-    global shooting
-    shooting = False
 
 def movementCalc(dir, step, rotation):
     # up=0, down=1, left=2, right=3
@@ -297,7 +202,7 @@ def movementCalc(dir, step, rotation):
     
     return [dx,dz]
 
-def Astar(start, end):
+def Astar(ySlice, start, end):
 
     # written with reference to https://youtu.be/-L-WgKMFuhE?si=UlBWzKz5x3yjQHLc&t=455
     # ySlice is the slice of the 3D array
@@ -305,14 +210,13 @@ def Astar(start, end):
     # end [x,y,z]
 
     openList = [] # [x,y,z,f,g,h,parent]
-    closedList = set() # using a set for faster lookups
+    closedList = []
     blank = 0,0,0
     path = []
 
-    global navMesh
-
-    print(navMesh)
-    temp = navMesh[0][20]
+    ySlice = navMesh 
+    print(ySlice)
+    temp = ySlice[0][20]
     print(temp[0])
     #exit()
     # debug
@@ -331,57 +235,45 @@ def Astar(start, end):
 
     while openList:
         
-        # check if finding the path is taking too long
-        if len(openList) >= 50:
-            print("path not found")
-            return []
-
         # sort list by lowest f value 
         openList.sort(key=lambda x: x[3])
+
 
         # set current node from the open list
         current = openList[0]
         # remove the current node from the open list
         openList.remove(current)
         # add the current node to the closed list
-        closedList.update({(current[0],current[1],current[2],str((current[6])))})
+        closedList.append(current)
 
-        # check if the current node is the end node       
-        if (current[0], current[1], current[2]) == end:
+        # check if the current node is the end node
+        if current[0] == end[0] and current[1] == end[1] and current[2] == end[2]:
             print("path found")
-            # initialise current node from open list is in the format [x,y,z,f,g,h,parent]
-            if len(current) >= 6:
-                # if that current node is in [x,y,z,f,g,h,parent] format, then find the parent node in closedList
-                x,y,z,_,_,_,parent = current
-                path.append([x,y,z])
+            # generate the path
+            if current[0] == end[0] and current[1] == end[1] and current[2] == end[2]:
+                temp = navMesh[current[0]][current[2]]
+                path.append([temp[1],temp[2],temp[3]])
+                #path.append([current[0],current[1],current[2]])
+                
+                # search for the coordinates in closedList and then set the closed list item as the current node
                 for item in closedList:
-                    if item[0] == parent[0] and item[1] == parent[1] and item[2] == parent[2]:
+                    if item[0] == current[6][0] and item[1] == current[6][1] and item[2] == current[6][2]:
+                        temp = navMesh[current[0]][current[2]]
+                        path.append([temp[1],temp[2],temp[3]])
+                        #path.append([item[0],item[1],item[2]])
                         current = item
-                        print(current)
-            
-            # closedList is in the format [x,y,z,parent], so find the parent node in closedList
-            while closedList:
-                x,y,z,parent = current
-                parent = eval(parent)
-                path.append([x,y,z])
-                if x == start[0] and z == start[2]:
-                    # convert the path coordinates to navMesh coordinates
-                    tempA = []
-                    for item in path:
-                        temp = navMesh[item[0]][item[2]]
-                        tempA.append([temp[1],temp[2],temp[3]])
-                    
-                    path = tempA
-                    return path
 
+            while closedList:
                 for item in closedList:
-                    px,py,pz = parent
-                    if item[0] == px and item[2] == pz:
+                    if item[0] == current[6][0] and item[1] == current[6][1] and item[2] == current[6][2]:
+                        temp = navMesh[current[0]][current[2]]
+                        path.append([temp[1],temp[2],temp[3]])
+                        #path.append([item[0],item[1],item[2]])
                         current = item
-                        print(current)
-               
-            return []  # reverse the path because it was built from end to start
-        
+                
+                if current[0] == start[0] and current[2] == start[2]:
+                    #print(closedList)    
+                    return path
         
         # generate the children of the current node
         for i in range(-1,2):
@@ -395,7 +287,7 @@ def Astar(start, end):
                         continue
 
                     # check if the child is collidable
-                    temp = navMesh[int(current[0])+i][int(current[2]+j)]
+                    temp = ySlice[int(current[0])+i][int(current[2]+j)]
                     #print(temp)
                     if len(str(temp)) == 1:
                         if temp == 1:                
@@ -417,16 +309,12 @@ def Astar(start, end):
                         continue
 
                     # check if the child is in the closed list
-                    #tolerance = 0
-                    #for block in closedList:
-                    #    if block[0] == int(current[0])+i and block[2] == int(current[2]+j):
-                    #        tolerance += 1
-                    #        continue
-                    #if tolerance >= 1:
-                    #    continue
-
-                    if (int(current[0])+i, int(current[1]), int(current[2]+j)) in [tuple(item[:3]) for item in closedList]:
-                        # print the node that is in the closed list
+                    tolerance = 0
+                    for block in closedList:
+                        if block[0] == int(current[0])+i and block[2] == int(current[2]+j):
+                            tolerance += 1
+                            continue
+                    if tolerance >= 1:
                         continue
 
                     # check if the child is in the open list
@@ -451,18 +339,6 @@ def Astar(start, end):
                 #print("child: " + str([int(current[0])+i,current[1],int(current[2]+j),f,g,h,parent]))
                 openList.append([int(current[0])+i,current[1],int(current[2]+j),f,g,h,parent])
         
-def cache_path(start, end, path):
-    global path_cache
-
-    cache_key = (start, end)
-    path_cache[cache_key] = path
-
-def retrieve_path(start, end):
-    global path_cache
-
-    cache_key = (start, end)
-    return path_cache.get(cache_key)
-
 def AABB(player, box):
     # player = [x-20,y-40,z-20, x+20,y+40,z+20]
     # box = [x1,y1,z1,x2,y2,z2]
@@ -501,45 +377,36 @@ def raycast(x,y,z, angleX, angleY):
             rotation,type,id = float(rotation),int(type),int(id)
             # pushMatrix()
             # fill(0,255,0)
-            # translate(ex-60,ey-90,ez-60)
+            # translate(ex-60,ey-50,ez-60)
             # box(20)
             # popMatrix()
             # pushMatrix()
             # fill(0,255,0)
-            # translate(ex+50,ey+120,ez+50)
+            # translate(ex+50,ey+140,ez+50)
+            # box(20)
+            # popMatrix()
+# 
+            # pushMatrix()
+            # fill(0,0,255)
+            # translate(rx,ry,rz)
             # box(20)
             # popMatrix()
 
-            #pushMatrix()
-            #fill(0,0,255)
-            #translate(rx,ry,rz)
-            #box(20)
-            #popMatrix()
-
-            if AABB([(rx-5),(ry-5),(rz-5), (rx+5),(ry+5),(rz+5)], [(ex-60),(ey-120),(ez-60), (ex+60),(ey+120),(ez+60)]) == True:
+            if AABB([(rx-10),(ry-10),(rz-10), (rx+10),(ry+10),(rz+10)], [(ex-60),(ey-50),(ez-60), (ex+50),(ey+140),(ez+50)]) == True:
                 e += 1
-                return id
 
-
-        raycastDistance += 50
-        #try:
-        #    setting = 0
-        #    if hitboxes[int(floor(ry/100))][int(floor(rx/100))][int(floor(rz/100))] == 1 or e != 0:
-        #        if e != 0:
-        #            print("entity collision")
-        #            setting = 1
-        #        if hitboxes[int(floor(ry/100))][int(floor(rx/100))][int(floor(rz/100))] == 1:
-        #            print("block collision")
-        #        if setting == 0:
-        #            return [rx,ry,rz]
-        #        elif setting == 1:
-        #            return id
-#
-        #    else:
-        #        raycastDistance += 100
-        #except IndexError: 
-        #        raycastDistance = 3000
-        #        pass
+        try:
+            if hitboxes[int(floor(ry/100))][int(floor(rx/100))][int(floor(rz/100))] == 1 or e != 0:
+                if e != 0:
+                    print("entity collision")
+                if hitboxes[int(floor(ry/100))][int(floor(rx/100))][int(floor(rz/100))] == 1:
+                    print("block collision")
+                return [rx,ry,rz]
+            else:
+                raycastDistance += 100
+        except IndexError: 
+                raycastDistance = 3000
+                pass
 
 def hitboxCalc(x, y, z, setting=0, option=0):
 
@@ -598,69 +465,6 @@ def hitboxCalc(x, y, z, setting=0, option=0):
     elif option == 1:
         return len(tempArray)
 
-def ammoBoxSpawn(location, rotation):
-    
-    x,y,z = location
-
-    global ammoBox
-
-    pushMatrix()
-    translate(x,y+120,z)
-    rotateY(rotation)
-    rotateX(PI)
-    scale(50)
-    shape(ammoBox)
-    popMatrix()
-
-def runAmmoBoxes():
-
-    global ammoBoxes
-
-    for item in ammoBoxes:
-        x,y,z,rotation = item
-        rotation += (PI/34)
-        item[3] = rotation
-        ammoBoxSpawn([x,y,z], rotation)
-
-
-def explode(emitter, lifetime):
-
-    ox,oy,oz = emitter
-
-    # spawn particles
-    # https://www.desmos.com/3d/8db868c05d
-    for i in range(0,10): # x,z sectors of particles
-        for j in range(-1,2): # y sectors of particles
-
-            # calculate the position of the particle
-            a = i * ((2*PI)/10)
-            b = j * 0.7
-            lifetime = millis() - lifetime
-
-            x = (sin(i)+ox) - lifetime*((sin(i)+ox)-ox) 
-            y = (b+oy) - lifetime*((b+oy)-oy)
-            z = (cos(i)+oz) - lifetime*((cos(i)+oz)-oz)
-
-            # render the particle
-            pushMatrix()
-            fill(255,0,0)
-            translate(x,y,z)
-            noStroke()
-            box(10)
-            popMatrix()
-
-def runEmitters():
-    global emitters
-
-    for item in emitters:
-        ox,oy,oz = item[0]
-        lifetime = item[1]
-
-        if millis() - lifetime > 200:
-            emitters.remove(item)
-        else:
-            explode([ox,oy,oz], lifetime)
-
 def f3(x,y,z,rotation):
     # information screen
     global f3State,ui,time3
@@ -682,7 +486,7 @@ def f3(x,y,z,rotation):
         ui.beginDraw()
         ui.clear()
         ui.textSize(30)
-        ui.textAlign(LEFT)
+        ui.textAlign(RIGHT)
         ui.fill(255,0,0)
         ui.text("coordinates: " + str(floor((x+50)/100)) + "," + str(-1*floor(y/100)) + "," + str(floor((z+50)/100)), 300, 30)
         ui.text("rotation: " + str(round(rotation*(180/PI))), 220, 70)
@@ -703,91 +507,15 @@ def f3(x,y,z,rotation):
     hint(ENABLE_DEPTH_TEST)
     popMatrix()
 
-def damageOverlay(reset=False):
-    global dmgOverlay, image3, time7
-
-    if reset == True:
-        time7 = millis()
-    else:
-        if millis() - time7 < 3000:
-            dmgOverlay.beginDraw()
-            dmgOverlay.clear()
-            dmgOverlay.image(image3, 0, 0, width, height)
-            dmgOverlay.endDraw()
-        else:
-            dmgOverlay.beginDraw()
-            dmgOverlay.clear()
-            dmgOverlay.endDraw()
-
-    pushMatrix()
-    camera()
-    hint(DISABLE_DEPTH_TEST)
-    noLights()
-    image(dmgOverlay,0,0)
-    hint(ENABLE_DEPTH_TEST)
-    popMatrix()
-
 def playerUi(timer=0,wave=0):
     # player model
     global playerModel, image1, image2
 
-    global shooting, reloading, health
-    
-    global arSequence, arIndex, cAmmo, tAmmo
-    if shooting == False and reloading == False:
-        playerModel.beginDraw()
-        playerModel.clear()
-        playerModel.image(image1, 0, 0, width, height)
-        playerModel.image(image2, (width/2)-50, (height/2)-50, 30, 30)
-        playerModel.endDraw()
-    if (shooting == True or arIndex != 0) and reloading == False and cAmmo > 0:
-        playerModel.beginDraw()
-        playerModel.clear()
-        
-        # animate the player shooting
-        playerModel.image(arSequence[arIndex], 0, 0, width, height)
-        arIndex += 1
-        if arIndex == 7:
-            cAmmo -= 1
-            arIndex = 0
-
-        playerModel.image(image2, (width/2)-50, (height/2)-50, 30, 30)
-        playerModel.endDraw()
-
-    global arRSequence, arRIndex
-    if (reloading == True or arRIndex != 0) and shooting == False:
-        playerModel.beginDraw()
-        playerModel.clear()
-        
-        # animate the player reloading
-        playerModel.image(arRSequence[arRIndex], 0, 0, width, height)
-        arRIndex += 1
-        if arRIndex == 28:
-            arRIndex = 0
-
-            if tAmmo >= 30:
-                if cAmmo == 0:
-                    cAmmo = 30
-                    tAmmo -= 30 
-                elif cAmmo != 30:
-                    tAmmo -= 30 - cAmmo
-                    cAmmo = 30
-            elif tAmmo < 30:
-                if cAmmo == 0:
-                    cAmmo = tAmmo
-                    tAmmo = 0
-                elif cAmmo + tAmmo > 30:
-                    tAmmo -= 30 - cAmmo
-                    cAmmo = 30
-                elif cAmmo + tAmmo <= 30:
-                    cAmmo += tAmmo
-                    tAmmo = 0
-
-            reloading = False
-
-        playerModel.image(image2, (width/2)-50, (height/2)-50, 30, 30)
-        playerModel.endDraw()
-
+    playerModel.beginDraw()
+    playerModel.clear()
+    playerModel.image(image1, 0, 0, width, height)
+    playerModel.image(image2, (width/2)-50, (height/2)-50, 30, 30)
+    playerModel.endDraw()
 
     if timer != 0:
         playerModel.beginDraw()
@@ -805,22 +533,6 @@ def playerUi(timer=0,wave=0):
         playerModel.text("wave: " + str(wave), (width/2), 100)
         playerModel.endDraw()
     
-    # Display the ammo
-    playerModel.beginDraw()
-    playerModel.fill(0,0,0)
-    playerModel.textSize(30)
-    playerModel.textAlign(BOTTOM)
-    playerModel.text("ammo: " + str(cAmmo) + "/" + str(tAmmo), 30, 150)
-    playerModel.endDraw()
-
-    # Display the health
-    playerModel.beginDraw()
-    playerModel.fill(0,0,0)
-    playerModel.rect(19,19,202,32)
-    playerModel.fill(255,0,0)
-    playerModel.rect(20,20,(health*2),30)
-    playerModel.noStroke()
-    playerModel.endDraw()
     # display the player model
     pushMatrix()
     camera()
@@ -858,7 +570,7 @@ def player():
         if (millis() - time2) < 500:
             # https://www.desmos.com/calculator/jlcyciwaaq
             dt = -5 + (millis() - time2)/58
-            height = 15
+            height = 10
             width = 1
             steepness = 1
             dy -= float(height / (1 + exp((steepness*(dt-10))/width)) - float(height / (1 + exp((steepness*dt)/width))))
@@ -902,76 +614,12 @@ def zombieMove(player): # TODO: potentially needs a refactor to organise some va
         if item[6] == [] or len(item[6]) == 1:
             # calculate the path
             Zx,Zy,Zz,rotation,type,id,path,timer1,timer2 = item
-
-            # check if zombie is within a certain distance of the player
-            global time6, health
-            if sqrt((Zx-player[0])**2 + (Zz-player[2])**2) < 250:
-                print("zombie is close to player")
-                offset = PI/2
-                rot = atan2(Zx - player[0],Zz - player[2]) + offset
-
-                if time6 == 0:
-                    time6 = millis()
-                else:
-                    if millis() - time6 >= 400:
-                        time6 = millis()
-                        print("player hit")
-                        health -= 10
-                        damageOverlay(reset=True)
-
-                for index in entity:
-                    if index[5] == id:
-                        index[3] = float(rot)
-
-                continue
-            else:
-                time6 = 0
-
-
             player = (int(floor((player[0])/100)),int(int(floor(Zy/100))+1),int(floor((player[2])/100)))
             zombie = (int(floor((Zx/100))),int(int(floor(Zy/100))+1),int(floor((Zz/100))))
             print("player: " + str(player))
             print("zombie: " + str(zombie))
-            #print("hitboxes: " + str(hitboxes[int(floor(Zy/100))+1]))
-
-            # find the middle point of the zombie and player, reduce the path length if the path is too long to prevent lag
-            Zx,Zy,Zz = zombie
-            Px,Py,Pz = player
-
-            maxPathLength = 5
-
-            #try: # prevent division by zero
-            #    hDistance = sqrt((Zx-Px)**2 + (Zz-Pz)**2) # heuristic distance
-            #    slope = float(Zy-Py)/float(Zx-Px)
-            #    b = Zy - (slope*Zx)
-            #    if hDistance > maxPathLength:
-            #        halfwayX = hDistance/2
-            #        halfwayY = slope*halfwayX + b
-#
-            #        # check if the halfway point is collidable
-            #        while hitboxes[int(floor(Zy))][int(floor(halfwayX))][int(floor(halfwayY))] == 1:
-            #            halfwayX = halfwayX/2
-            #            halfwayY = slope*halfwayX + b
-#
-            #        zombie = (int(floor(halfwayX)),int(floor(Zy)),int(floor(halfwayY)))
-            #except ZeroDivisionError:
-            #    pass
-
-
-
-
-
-            # check if the path is cached
-            cached_path = retrieve_path(zombie, player)
-            if cached_path is None:
-                if player[0] != 0 and player[2] != 0: # for some reason the player will falsely get reported as being at 0,0, causing the pathfinding to fail, by checking if the player is at 0,0, we can prevent the pathfinding from running and prevent lag
-                    path = Astar(zombie, player)
-
-                    # cache the path
-                    cache_path(zombie, player, path)
-            else:
-                path = cached_path
-
+            print("hitboxes: " + str(hitboxes[int(floor(Zy/100))+1]))
+            path = Astar(hitboxes[int(floor(Zy/100))+1], zombie, player)
             if path == None:
                 print("path not found")
                 continue
@@ -1010,25 +658,11 @@ def zombieMove(player): # TODO: potentially needs a refactor to organise some va
             # look at player
             print(str(Zx-player[0]) + " " + str(Zz-player[2]))
             offset = PI/2
-            global time6, health
-            if sqrt((Zx-player[0])**2 + (Zz-player[2])**2) < 250:
-                # zombie is close to the player so look at the player
-                rot = atan2(Zx - player[0],Zz - player[2]) + offset
- 
-                if time6 == 0:
-                    time6 = millis()
-                else:
-                    if millis() - time6 >= 400:
-                        time6 = millis()
-                        print("player hit")
-                        health -= 10
-                        damageOverlay(reset=True)
-            else:
-                # zombie is too far from the player so look where its walking
-                rot = atan2(Zx - Tx,Zz - Tz) + offset
-                time6 = 0
+            rot = atan2(Zx - Tx,Zz - Tz) + offset
             
             print("Zombie rotation: " + str(rot))
+
+            # TODO: add y movement
 
             # make the zombie jump
             if ((Ty - Zy) < -20) or (millis() - timer1) < 500:
@@ -1039,7 +673,7 @@ def zombieMove(player): # TODO: potentially needs a refactor to organise some va
                     # if hitboxCalc(floor(Zx)/100,floor(Zy)/100,floor(Zz)/100,1,1) != 0:
                     print("timer reset")
                     timer1 = millis()
-                    #item[7] = timer1
+                    item[7] = timer1
 
                 if (millis() - timer1) < 500:
                     # https://www.desmos.com/calculator/jlcyciwaaq
@@ -1051,12 +685,13 @@ def zombieMove(player): # TODO: potentially needs a refactor to organise some va
 
             print("Zx: " + str(Zx) + " Zy: " + str(Zy) + " Zz: " + str(Zz) + " id: " + str(id) + " path: " + str(path))
 
+            # TODO: add a seperate timer from the jump timer
             # run gravity calculations
             print(Zx)
             if hitboxes[floor(Zy)/100][floor(Zx)/100][floor(Zz)/100] == 1: # y, x, z
                 print("set time")
                 timer2 = millis()
-                #item[8] = timer2
+                item[8] = timer2
 
         
             #renderBlock(Zx,Zy-250,Zz,255,0,0)
@@ -1070,22 +705,15 @@ def zombieMove(player): # TODO: potentially needs a refactor to organise some va
 
             # move the zombie
             step = 4.5
-            tolerance = 5 # prevent jittering
-            if -tolerance <= (Tx - Zx) <= tolerance:
-                dx = 0
-            else:
-                if (Tx - Zx) > 0:
-                    dx += step
-                elif (Tx - Zx) < 0:
-                    dx -= step
+            if (Tx - Zx) > 0:
+                dx += step
+            elif (Tx - Zx) < 0:
+                dx -= step
 
-            if -tolerance <= (Tz - Zz) <= tolerance:
-                dz = 0
-            else:
-                if (Tz - Zz) > 0:
-                    dz += step
-                elif (Tz - Zz) < 0:
-                    dz -= step
+            if (Tz - Zz) > 0:
+                dz += step
+            elif (Tz - Zz) < 0:
+                dz -= step
 
             # prevent jittering
             #tolerance = 5
@@ -1096,28 +724,14 @@ def zombieMove(player): # TODO: potentially needs a refactor to organise some va
             #if -tolerance <= dz <= tolerance:
             #    dz = 0
 
-            for item in entity:
-                if item[5] == id:
-                    continue
-
-                feather = 50
-                
-                if AABB([(Zx+dx)-feather,(Zy),(Zz+dz)-feather, (Zx+dx)+feather, (Zy+100), (Zz+dz)+feather], [item[0]-feather, item[1], item[2]-feather,  item[0]+feather, item[1]+100, item[2]+feather]) == True:
-                    dx = 0
-                    dz = 0
-
             # update all movements to entity data
             print("dx: " + str(dx) + " dz: " + str(dz) + " dy: " + str(dy))
             for index in entity:
                 if index[5] == id:
-                    index[0] = int(index[0]) + dx
-                    index[1] = int(index[1]) + dy
-                    index[2] = int(index[2]) + dz
-                    index[3] = float(rot)
-                    index[7] = timer1
-                    index[8] = timer2
-                
-
+                    entity[int(index[5])][0] = int(entity[int(index[5])][0]) + dx
+                    entity[int(index[5])][1] = int(entity[int(index[5])][1]) + dy
+                    entity[int(index[5])][2] = int(entity[int(index[5])][2]) + dz
+                    entity[int(index[5])][3] = float(rot)
 
 
             
@@ -1130,7 +744,7 @@ def gameManager(setup=False):
         wave = 1
 
     # spawnable locations
-    locations = [[3,13,29],[4,13,29],[5,13,29],[23,13,17],[23,13,18],[23,13,19],[23,11,10],[23,11,11],[23,11,12]]
+    locations = [[3,13,29],[4,13,29],[5,13,29],[23,13,17],[23,13,18],[23,13,19]]#,[24,11,10],[24,11,11],[24,11,12]]
     if millis() - time4 < 10000:
         playerUi(timer=(10 - ((millis() - time4)/1000))) # display the player a countdown timer
     else:
@@ -1145,7 +759,7 @@ def gameManager(setup=False):
         elif (millis() - time5 > 2000) and entity == []:
             # spawn zombies
             wave += 1
-            for i in range(4):
+            for i in range(1):
                 print(locations[int(random(0,len(locations)))][1])
                 randomId = int(random(0,len(locations)))
                 Tx,Ty,Tz = gridConvert(locations[randomId][0],locations[randomId][1],locations[randomId][2])
@@ -1167,35 +781,7 @@ def draw():
     rotation = xCenter
     #####################
 
-    # shooting
-    global shooting, reloading
-    if shooting == True and reloading == False:
-        print("shooting")
-        raycastOut = raycast(x,y,z,xCenter,yCenter)
-        print(raycastOut)
-        try:
-            if len(raycastOut) == 3:
-                pass
-        except TypeError:
-            if raycastOut != None:
-                for item in entity:
-                    if int(item[5]) == int(raycastOut):
-                        print("hit")
-
-                        global emitters, ammoBoxes
-                        pos = item[0],item[1],item[2]
-                        print(entity)
-                        emitters.append([pos,millis()])
-
-                        # drop ammo box
-                        if random(0,10) >= 9:
-                            ammoBoxes.append([item[0],item[1],item[2],int(0)])
-
-                        entity.remove(item)
-                        print(entity)
-                        break
-
-
+    print(raycast(x,y,z,xCenter,yCenter))
 
     # get hitboxes
     # localise the player position based on the camera
@@ -1221,7 +807,7 @@ def draw():
             for item in tempArray:
                 hx, hy, hz = gridConvert(item[0], item[1], item[2])
                 hx, hy, hz = floor(hx), floor(hy), floor(hz)
-                #renderBlock(hx,hy,hz,255,0,0)
+                renderBlock(hx,hy,hz,255,0,0)
 
                 feather = 60
 
@@ -1253,7 +839,7 @@ def draw():
                 hx, hy, hz = gridConvert(item[0], item[1], item[2])
                 hx, hy, hz = floor(hx), floor(hy), floor(hz)
                 
-                #renderBlock(hx,hy,hz,255,0,0)
+                renderBlock(hx,hy,hz,255,0,0)
 
                 # print("x: " + str(x) + " y: " + str(y) + " z: " + str(z) + " dx: " + str(dx) + " dz: " + str(dz) + " hx: " + str(hx) + " hy: " + str(hy) + " hz: " + str(hz))
                 feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
@@ -1288,7 +874,7 @@ def draw():
                 hx, hy, hz = gridConvert(item[0], item[1], item[2])
                 hx, hy, hz = floor(hx), floor(hy), floor(hz)
                 
-                #renderBlock(hx,hy,hz,255,0,0)
+                renderBlock(hx,hy,hz,255,0,0)
 
                 # print("x: " + str(x) + " y: " + str(y) + " z: " + str(z) + " dx: " + str(dx) + " dz: " + str(dz) + " hx: " + str(hx) + " hy: " + str(hy) + " hz: " + str(hz))
                 feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
@@ -1323,7 +909,7 @@ def draw():
                 hx, hy, hz = gridConvert(item[0], item[1], item[2])
                 hx, hy, hz = floor(hx), floor(hy), floor(hz)
                 
-                #renderBlock(hx,hy,hz,255,0,0)
+                renderBlock(hx,hy,hz,255,0,0)
 
                 # print("x: " + str(x) + " y: " + str(y) + " z: " + str(z) + " dx: " + str(dx) + " dz: " + str(dz) + " hx: " + str(hx) + " hy: " + str(hy) + " hz: " + str(hz))
                 feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
@@ -1358,7 +944,7 @@ def draw():
                 hx, hy, hz = gridConvert(item[0], item[1], item[2])
                 hx, hy, hz = floor(hx), floor(hy), floor(hz)
                 
-                #renderBlock(hx,hy,hz,255,0,0)
+                renderBlock(hx,hy,hz,255,0,0)
 
                 # print("x: " + str(x) + " y: " + str(y) + " z: " + str(z) + " dx: " + str(dx) + " dz: " + str(dz) + " hx: " + str(hx) + " hy: " + str(hy) + " hz: " + str(hz))
                 feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
@@ -1408,18 +994,6 @@ def draw():
     zombieMove(playerCord)
     spawnZombies(entity)
 
-    runEmitters()
-    runAmmoBoxes()
-
-    # detect if player intersected with an ammo box
-    global ammoBoxes, tAmmo
-    for item in ammoBoxes:
-        feather = 30
-        if AABB([(x-20),(y),(z-20), (x+20),(y+200),(z+20)], [(item[0]-feather),(item[1]-feather),(item[2]-feather), (item[0]+feather),(item[1]+feather),(item[2]+feather)]) == True:
-            ammoBoxes.remove(item)
-            tAmmo += 10
-
-
     # start = 18,14,24
     # end = 4,14,26 
     # benchmarkStartAstar = millis()
@@ -1430,7 +1004,6 @@ def draw():
     # run ui commands
     f3(x,y,z,rotation)
     playerUi()
-    damageOverlay()
 
 
     print("This frame took " + str(millis() - benchmarkStart) + " miliseconds to complete")
