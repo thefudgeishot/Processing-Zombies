@@ -200,6 +200,22 @@ def setup():
 
     arRIndex = 0
 
+    global numberSequence, bannerBase
+    bannerBase = loadImage("banner/base.png")
+    numberSequence = []
+
+    numberSequence.append(loadImage("banner/0.png"))
+    numberSequence.append(loadImage("banner/1.png"))
+    numberSequence.append(loadImage("banner/2.png"))
+    numberSequence.append(loadImage("banner/3.png"))
+    numberSequence.append(loadImage("banner/4.png"))
+    numberSequence.append(loadImage("banner/5.png"))
+    numberSequence.append(loadImage("banner/6.png"))
+    numberSequence.append(loadImage("banner/7.png"))
+    numberSequence.append(loadImage("banner/8.png"))
+    numberSequence.append(loadImage("banner/9.png"))
+
+
     global cAmmo, tAmmo, health
     cAmmo = 30
     tAmmo = 60
@@ -220,9 +236,10 @@ def setup():
     global textOverlays
     textOverlays = []
 
-    global wave, totalZombies
-    wave = 0
+    global wave, totalZombies, maxZombies
+    wave = 1
     totalZombies = 0
+    maxZombies = 10
 
     global zombie, ammoBox
     zombie = loadShape("low_poly_zombie.obj")
@@ -233,7 +250,7 @@ def setup():
 
     size(1000, 700, P3D)
     noClip()
-    #fullScreen()
+    fullScreen()
     noCursor()
     frameRate(60)
 
@@ -524,6 +541,9 @@ def raycast(x,y,z, angleX, angleY):
                 e += 1
                 return id
 
+        if hitboxes[int(floor(ry/100))][int(floor(rx/100))][int(floor(rz/100))] == 1:
+            return None
+
 
         raycastDistance += 50
         #try:
@@ -707,23 +727,40 @@ def f3(x,y,z,rotation):
     hint(ENABLE_DEPTH_TEST)
     popMatrix()
 
-def textOverlay(textm, coord, colour, lifetime):
-    x,z = coord
-    r,g,b = colour
-    textm = str(textm)
+def waveProgressBar(totalZombies):
+    global ui
+
+
+def waveBanner(waveN, lifetime):
+
+    
 
     global ui
-    print(str(textm) + " " + str(coord) + " " + str(colour) + " " + str(lifetime))
+    #print(str(textm) + " " + str(coord) + " " + str(colour) + " " + str(lifetime))
     if (millis() - lifetime) <= 2000:
-        ui.beginDraw()
-        ui.fill(r,g,b)
-        ui.textSize(30)
-        ui.text(textm, x, z)
-        ui.endDraw()
+        #ui.beginDraw()
+        #ui.fill(r,g,b)
+        #ui.textAlign(CENTER)
+        #ui.textSize(30)
+        #ui.text(textm, x-50, z)
+        #ui.endDraw()
+
+        # TODO: Resize shit
+        global numberSequence, bannerBase
+        if len(str(waveN)) == 1:
+            ui.beginDraw()
+            ui.clear()
+            ui.image(bannerBase, floor(width/3), floor((width/8)), (width/3), (height/8))
+            ui.image(numberSequence[int(0)], floor(width/3), floor((width/8)), (width/3), (height/8))
+            ui.image(numberSequence[int(waveN)], floor(width/3)+50, floor((width/8)), (width/3), (height/8))
+            ui.endDraw()
+
+
+
     elif (millis() - lifetime) > 2000:
         global textOverlays
         try:
-            textOverlays.remove([textm, coord, colour, lifetime])
+            textOverlays.remove([waveN, lifetime])
         except ValueError:
             pass
     
@@ -739,7 +776,7 @@ def runTextOverlay():
     global textOverlays
 
     for item in textOverlays:
-        textOverlay(item[0], item[1], item[2], item[3])
+        waveBanner(item[0], item[1])
 
 
 def damageOverlay(reset=False):
@@ -858,6 +895,16 @@ def playerUi(timer=0,wave=0):
     playerModel.rect(19,19,202,32)
     playerModel.fill(255,0,0)
     playerModel.rect(20,20,(health*2),30)
+    playerModel.noStroke()
+    playerModel.endDraw()
+
+    global totalZombies, maxZombies
+    playerModel.beginDraw()
+    playerModel.fill(0,0,0)
+    playerModel.rect(((width/5)*2)-1,19,202,32)
+    playerModel.fill(0,255,0)
+    print("total zombies: " + str(totalZombies) + " max zombies: " + str(maxZombies) + " ratio: " + str(float(totalZombies/maxZombies)))
+    playerModel.rect((width/5)*2,20,((totalZombies/maxZombies)*200),30)
     playerModel.noStroke()
     playerModel.endDraw()
     # display the player model
@@ -1141,27 +1188,31 @@ def zombieMove(player): # TODO: potentially needs a refactor to organise some va
 
                 feather = 20
                 
-                print("zombie")
-                print(str(Zx+dx) + " " + str(Zy-200) + " " + str(Zz+dz))
-                pushMatrix()
-                fill(255,0,0)
-                translate(Zx+dx,Zy-200,Zz+dz)
-                noStroke()
-                box(50)
-                popMatrix()
+                #print("zombie")
+                #print(str(Zx+dx) + " " + str(Zy-200) + " " + str(Zz+dz))
+                #pushMatrix()
+                #fill(255,0,0)
+                #translate(Zx+dx,Zy-200,Zz+dz)
+                #noStroke()
+                #box(50)
+                #popMatrix()
 
-                print("other Zombie")
-                print(str(item[0]) + " " + str(item[1]) + " " + str(item[2]))
-                pushMatrix()
-                fill(0,255,0)
-                translate(item[0],item[1],item[2])
-                noStroke()
-                box(50)
-                popMatrix()
+                #print("other Zombie")
+                #print(str(item[0]) + " " + str(item[1]) + " " + str(item[2]))
+                #pushMatrix()
+                #fill(0,255,0)
+                #translate(item[0],item[1],item[2])
+                #noStroke()
+                #box(50)
+                #popMatrix()
 
                 if AABB([((Zx+dx)-feather),((Zy-200)-10),((Zz+dz)-feather), ((Zx+dx)+feather), ((Zy-200)+100), ((Zz+dz)+feather)], [(item[0]-feather), (item[1]), (item[2]-feather),  (item[0]+feather), (item[1]+100), (item[2]+feather)]) == True:
-                    dx = 0
-                    dz = 0
+
+                    # push the zombie away from the other zombie
+                    direction = -dotProduct(Zx,Zz,item[0]-Zx,item[2]-Zz)
+                    force = 50
+                    dx += force*cos(direction)
+                    dz += force*sin(direction)
                     print("collision")
 
             # update all movements to entity data
@@ -1181,6 +1232,7 @@ def zombieMove(player): # TODO: potentially needs a refactor to organise some va
             
 def gameManager(setup=False):
     global time4, time5, wave, entity
+    global totalZombies, maxZombies
     # if being called for the first time
     if setup == True:
         # start timer
@@ -1205,21 +1257,24 @@ def gameManager(setup=False):
                     if item[0] == ("wave " + str(wave)):
                         pass
             else:
-                textOverlays.append([str("wave " + str(wave)), [width/2, height/2], [255,0,0], millis()])
+                textOverlays.append([int(wave), millis()])
                 print(textOverlays)
                 #exit()
         # then spawn zombies
-        elif (millis() - time5 > 2000) and entity == []:
+        elif ((millis() - time5 > 2000) and entity == []) or totalZombies != 0:
             # spawn zombies
-            global totalZombies
-            totalZombies = random(1,10)
+            if totalZombies == 0:
+                maxZombies= floor(random(10,20))
+                totalZombies = floor(random(1,maxZombies))
             # TODO:
             wave += 1
-            for i in range(4):
+            spawnLimit = 4
+            if len(entity) <= spawnLimit:
+                totalZombies -= 1
                 print(locations[int(random(0,len(locations)))][1])
                 randomId = int(random(0,len(locations)))
                 Tx,Ty,Tz = gridConvert(locations[randomId][0],locations[randomId][1],locations[randomId][2])
-                entity.append([Tx,Ty,Tz,str(float(random((-2*PI),(2*PI)))),str(0),str(i),[],int(0),int(0)]) # [x,y,z,rotation,type,id,path,timer1,timer2]
+                entity.append([Tx,Ty,Tz,str(float(random((-2*PI),(2*PI)))),str(0),str(maxZombies-totalZombies),[],int(0),int(0)]) # [x,y,z,rotation,type,id,path,timer1,timer2]
 
 
 def draw():
@@ -1244,6 +1299,8 @@ def draw():
         raycastOut = raycast(x,y,z,xCenter,yCenter)
         print(raycastOut)
         try:
+            if raycastOut == None:
+                pass
             if len(raycastOut) == 3:
                 pass
         except TypeError:

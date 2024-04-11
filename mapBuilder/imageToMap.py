@@ -2,9 +2,9 @@ from PIL import Image
 
 # Open the image file
 # for each file in directory
-for i in range(10, 16):
+for i in range(1, 13):
 
-    image = Image.open(f"C:/Users/hoeth/OneDrive/Desktop/3D-SpaceInvaders/mapBuilder/dust2/{i}.png")
+    image = Image.open(f"C:/Users/hoeth/OneDrive/Desktop/3D-SpaceInvaders/mapBuilder/crater/{i}.png")
 
     ylevel = i
     width, height = image.size
