@@ -4,8 +4,8 @@
 ##############################################################################
 
 # if running on linux, uncomment the following two lines
-# from java.lang import System
-# System.setProperty("jogl.disable.openglcore", "false")
+from java.lang import System
+System.setProperty("jogl.disable.openglcore", "false")
 
 def gridConvert(x, y, z):
     global scaling_factor
@@ -217,8 +217,12 @@ def setup():
     global ammoBoxes
     ammoBoxes = []
 
-    global wave
+    global textOverlays
+    textOverlays = []
+
+    global wave, totalZombies
     wave = 0
+    totalZombies = 0
 
     global zombie, ammoBox
     zombie = loadShape("low_poly_zombie.obj")
@@ -229,7 +233,7 @@ def setup():
 
     size(1000, 700, P3D)
     noClip()
-    fullScreen()
+    #fullScreen()
     noCursor()
     frameRate(60)
 
@@ -703,6 +707,41 @@ def f3(x,y,z,rotation):
     hint(ENABLE_DEPTH_TEST)
     popMatrix()
 
+def textOverlay(textm, coord, colour, lifetime):
+    x,z = coord
+    r,g,b = colour
+    textm = str(textm)
+
+    global ui
+    print(str(textm) + " " + str(coord) + " " + str(colour) + " " + str(lifetime))
+    if (millis() - lifetime) <= 2000:
+        ui.beginDraw()
+        ui.fill(r,g,b)
+        ui.textSize(30)
+        ui.text(textm, x, z)
+        ui.endDraw()
+    elif (millis() - lifetime) > 2000:
+        global textOverlays
+        try:
+            textOverlays.remove([textm, coord, colour, lifetime])
+        except ValueError:
+            pass
+    
+    pushMatrix()
+    camera()
+    hint(DISABLE_DEPTH_TEST)
+    noLights()
+    image(ui,0,0)
+    hint(ENABLE_DEPTH_TEST)
+    popMatrix()
+
+def runTextOverlay():
+    global textOverlays
+
+    for item in textOverlays:
+        textOverlay(item[0], item[1], item[2], item[3])
+
+
 def damageOverlay(reset=False):
     global dmgOverlay, image3, time7
 
@@ -1100,11 +1139,30 @@ def zombieMove(player): # TODO: potentially needs a refactor to organise some va
                 if item[5] == id:
                     continue
 
-                feather = 50
+                feather = 20
                 
-                if AABB([(Zx+dx)-feather,(Zy),(Zz+dz)-feather, (Zx+dx)+feather, (Zy+100), (Zz+dz)+feather], [item[0]-feather, item[1], item[2]-feather,  item[0]+feather, item[1]+100, item[2]+feather]) == True:
+                print("zombie")
+                print(str(Zx+dx) + " " + str(Zy-200) + " " + str(Zz+dz))
+                pushMatrix()
+                fill(255,0,0)
+                translate(Zx+dx,Zy-200,Zz+dz)
+                noStroke()
+                box(50)
+                popMatrix()
+
+                print("other Zombie")
+                print(str(item[0]) + " " + str(item[1]) + " " + str(item[2]))
+                pushMatrix()
+                fill(0,255,0)
+                translate(item[0],item[1],item[2])
+                noStroke()
+                box(50)
+                popMatrix()
+
+                if AABB([((Zx+dx)-feather),((Zy-200)-10),((Zz+dz)-feather), ((Zx+dx)+feather), ((Zy-200)+100), ((Zz+dz)+feather)], [(item[0]-feather), (item[1]), (item[2]-feather),  (item[0]+feather), (item[1]+100), (item[2]+feather)]) == True:
                     dx = 0
                     dz = 0
+                    print("collision")
 
             # update all movements to entity data
             print("dx: " + str(dx) + " dz: " + str(dz) + " dy: " + str(dy))
@@ -1140,10 +1198,22 @@ def gameManager(setup=False):
         
         # display wave number for 2 seconds
         if millis() - time5 < 2000:
-            playerUi(wave=wave) # display the player the wave number
+            #playerUi(wave=wave) # display the player the wave number
+            global textOverlays
+            if textOverlays != []:
+                for item in textOverlays:
+                    if item[0] == ("wave " + str(wave)):
+                        pass
+            else:
+                textOverlays.append([str("wave " + str(wave)), [width/2, height/2], [255,0,0], millis()])
+                print(textOverlays)
+                #exit()
         # then spawn zombies
         elif (millis() - time5 > 2000) and entity == []:
             # spawn zombies
+            global totalZombies
+            totalZombies = random(1,10)
+            # TODO:
             wave += 1
             for i in range(4):
                 print(locations[int(random(0,len(locations)))][1])
@@ -1431,6 +1501,7 @@ def draw():
     f3(x,y,z,rotation)
     playerUi()
     damageOverlay()
+    runTextOverlay()
 
 
     print("This frame took " + str(millis() - benchmarkStart) + " miliseconds to complete")
