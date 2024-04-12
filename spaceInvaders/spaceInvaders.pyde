@@ -727,10 +727,6 @@ def f3(x,y,z,rotation):
     hint(ENABLE_DEPTH_TEST)
     popMatrix()
 
-def waveProgressBar(totalZombies):
-    global ui
-
-
 def waveBanner(waveN, lifetime):
 
     
@@ -745,14 +741,15 @@ def waveBanner(waveN, lifetime):
         #ui.text(textm, x-50, z)
         #ui.endDraw()
 
-        # TODO: Resize shit
+        xO = +15
+        yO = -120
         global numberSequence, bannerBase
         if len(str(waveN)) == 1:
             ui.beginDraw()
             ui.clear()
-            ui.image(bannerBase, floor(width/3), floor((width/8)), (width/3), (height/8))
-            ui.image(numberSequence[int(0)], floor(width/3), floor((width/8)), (width/3), (height/8))
-            ui.image(numberSequence[int(waveN)], floor(width/3)+50, floor((width/8)), (width/3), (height/8))
+            ui.image(bannerBase, floor(width/3)+xO, floor((width/8))+yO, (width/3), (height/8))
+            ui.image(numberSequence[int(0)], floor(width/3)+xO, floor((width/8))+yO, (width/3), (height/8))
+            ui.image(numberSequence[int(waveN)], floor(width/3)+60+xO, floor((width/8))+yO, (width/3), (height/8))
             ui.endDraw()
 
 
@@ -872,15 +869,7 @@ def playerUi(timer=0,wave=0):
         playerModel.textAlign(CENTER)
         playerModel.text(timer, (width/2), 50)
         playerModel.endDraw()
-    
-    if wave != 1:
-        playerModel.beginDraw()
-        playerModel.fill(0,0,0)
-        playerModel.textSize(30)
-        playerModel.textAlign(CENTER)
-        playerModel.text("wave: " + str(wave), (width/2), 100)
-        playerModel.endDraw()
-    
+
     # Display the ammo
     playerModel.beginDraw()
     playerModel.fill(0,0,0)
@@ -892,21 +881,32 @@ def playerUi(timer=0,wave=0):
     # Display the health
     playerModel.beginDraw()
     playerModel.fill(0,0,0)
+    playerModel.rectMode(CORNER)
     playerModel.rect(19,19,202,32)
     playerModel.fill(255,0,0)
+    playerModel.rectMode(CORNER)
     playerModel.rect(20,20,(health*2),30)
     playerModel.noStroke()
     playerModel.endDraw()
 
-    global totalZombies, maxZombies
+    # display the wave duration
+    global totalZombies, maxZombies, entity
     playerModel.beginDraw()
     playerModel.fill(0,0,0)
-    playerModel.rect(((width/5)*2)-1,19,202,32)
+    playerModel.rectMode(CENTER)
+    playerModel.rect(((width/6)*3)-2,38,304,64)
     playerModel.fill(0,255,0)
-    print("total zombies: " + str(totalZombies) + " max zombies: " + str(maxZombies) + " ratio: " + str(float(totalZombies/maxZombies)))
-    playerModel.rect((width/5)*2,20,((totalZombies/maxZombies)*200),30)
+    
+    count = 0
+    for item in entity:
+        count += 1
+
+    #print("total zombies: " + str(totalZombies+float(count)) + " max zombies: " + str(maxZombies) + " ratio: " + str(float(totalZombies)/float(maxZombies)))
+    playerModel.rectMode(CENTER)
+    playerModel.rect(((width/6)*3)-1,38,((float(totalZombies+float(count))/float(maxZombies))*float(300-1)),58)
     playerModel.noStroke()
     playerModel.endDraw()
+
     # display the player model
     pushMatrix()
     camera()
@@ -1237,7 +1237,7 @@ def gameManager(setup=False):
     if setup == True:
         # start timer
         time4 = millis()
-        wave = 1
+        wave = 0
 
     # spawnable locations
     locations = [[3,13,29],[4,13,29],[5,13,29],[23,13,17],[23,13,18],[23,13,19],[23,11,10],[23,11,11],[23,11,12]]
@@ -1257,25 +1257,28 @@ def gameManager(setup=False):
                     if item[0] == ("wave " + str(wave)):
                         pass
             else:
-                textOverlays.append([int(wave), millis()])
-                print(textOverlays)
+                if wave != 0:
+                    textOverlays.append([int(wave), millis()])
+                    print(textOverlays)
                 #exit()
         # then spawn zombies
         elif ((millis() - time5 > 2000) and entity == []) or totalZombies != 0:
             # spawn zombies
             if totalZombies == 0:
-                maxZombies= floor(random(10,20))
-                totalZombies = floor(random(1,maxZombies))
-            # TODO:
-            wave += 1
+                scaleFactor = 1.2
+                maxZombies = ceil(random(10+(wave*scaleFactor),30+(wave*scaleFactor)))
+                totalZombies = maxZombies
+                wave += 1
+                time5 = millis()
+    
             spawnLimit = 4
-            if len(entity) <= spawnLimit:
+
+            if len(entity) <= spawnLimit and totalZombies != 0:
                 totalZombies -= 1
                 print(locations[int(random(0,len(locations)))][1])
                 randomId = int(random(0,len(locations)))
                 Tx,Ty,Tz = gridConvert(locations[randomId][0],locations[randomId][1],locations[randomId][2])
                 entity.append([Tx,Ty,Tz,str(float(random((-2*PI),(2*PI)))),str(0),str(maxZombies-totalZombies),[],int(0),int(0)]) # [x,y,z,rotation,type,id,path,timer1,timer2]
-
 
 def draw():
 
@@ -1315,7 +1318,10 @@ def draw():
                         emitters.append([pos,millis()])
 
                         # drop ammo box
-                        if random(0,10) >= 9:
+                        global wave
+                        scaleFactor = 1.2
+                        maxZ = floor(10 + (wave*scaleFactor))
+                        if random(0,maxZ) >= maxZ-1:
                             ammoBoxes.append([item[0],item[1],item[2],int(0)])
 
                         entity.remove(item)
