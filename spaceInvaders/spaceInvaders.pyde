@@ -1017,14 +1017,10 @@ def zombieMove(player): # TODO: potentially needs a refactor to organise some va
                 offset = PI/2
                 rot = atan2(Zx - player[0],Zz - player[2]) + offset
 
-                if time6 == 0:
-                    time6 = millis()
-                else:
-                    if millis() - time6 >= 400:
-                        time6 = millis()
-                        print("player hit")
-                        health -= 10
-                        damageOverlay(reset=True)
+                time6 = millis()
+                print("player hit")
+                health -= 1
+                damageOverlay(reset=True)
 
                 for index in entity:
                     if index[5] == id:
@@ -1122,14 +1118,10 @@ def zombieMove(player): # TODO: potentially needs a refactor to organise some va
                 # zombie is close to the player so look at the player
                 rot = atan2(Zx - player[0],Zz - player[2]) + offset
  
-                if time6 == 0:
-                    time6 = millis()
-                else:
-                    if millis() - time6 >= 400:
-                        time6 = millis()
-                        print("player hit")
-                        health -= 10
-                        damageOverlay(reset=True)
+                #time6 = millis()
+                print("player hit")
+                health -= 1
+                damageOverlay(reset=True)
             else:
                 # zombie is too far from the player so look where its walking
                 rot = atan2(Zx - Tx,Zz - Tz) + offset
@@ -1776,6 +1768,9 @@ def draw():
         damageOverlay()
         runTextOverlay()
 
+        global health
+        if health <= 0:
+            sceneIndex = 2
 
         print("This frame took " + str(millis() - benchmarkStart) + " miliseconds to complete")
 
