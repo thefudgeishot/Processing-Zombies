@@ -43,7 +43,7 @@ def loadHitboxes(key):
     hitboxes = [[[0 for _ in range(50)] for _ in range(50)] for _ in range(50)]
 
     # Define the maps in a array
-    maps = ["test", "test6", "de_dust2", "test3"]
+    maps = ["de_dust2", "crater"]
 
     # Load the map
     mapData = loadStrings("maps/" + maps[key] + ".txt")
@@ -61,7 +61,7 @@ def loadMap(key, xOffset, yOffset, zOffset):
     # background(0)
 
     # Define the maps in a array
-    maps = ["test", "test6", "de_dust2", "test3"]
+    maps = ["de_dust2", "crater"]
 
     # Load the map
     mapData = loadStrings("maps/" + maps[key] + ".txt")
@@ -107,16 +107,21 @@ def dotProduct(x1,y1,x2,y2):
 
 def setup():
 
-    global ui, playerModel, dmgOverlay
+    global ui, playerModel, dmgOverlay, mainMenu, gameOver
     ui = createGraphics(width,height, P2D)
     playerModel = createGraphics(width,height, P2D)
     dmgOverlay = createGraphics(width,height, P2D)
+    mainMenu = createGraphics(width,height, P2D)
+    gameOver = createGraphics(width,height, P2D)
 
     global x,y,z
-    x,y,z = 300,0,400
+    x,y,z = 300,200,400
 
     global dx,dy,dz
     dx,dy,dz = 0,0,0
+
+    global sceneIndex
+    sceneIndex = 0 # [0 = main menu, 1 = game, 2 = game over]
 
     global time2, time3, time, time4, time5, time6, time7
     time = 0
@@ -128,12 +133,12 @@ def setup():
     time7 = 0
 
     global hitboxes
-    hitboxes = loadHitboxes(2) # hitboxes only need to be loaded once
+    hitboxes = []
     #print(hitboxes[2][4][0])
     # exit()
 
     global navMesh
-    navMesh = genNavMesh(hitboxes) # navmesh only needs to be generated once
+    navMesh = []
 
     global buffer, bx, by, bz, angle
     buffer = [0]
@@ -149,6 +154,25 @@ def setup():
     image1 = loadImage("playerModel/AR/idle.png")
     image2 = loadImage("crosshair-1.png")
     image3 = loadImage("playerModel/damageOverlay.png")
+
+    global mainMenuBG, keybinds, title
+    mainMenuBG = loadImage("mainMenuBackground.png")
+    keybinds = loadImage("keybinds.png")
+    title = loadImage("title.png")
+
+    global cursorIMG
+    cursorIMG = loadImage("cursor.png")
+
+    global gameOverText
+    gameOverText = loadImage("gameOver.png")
+
+    global mapSequence, mapIndex
+    mapSequence = []
+
+    mapSequence.append(loadImage("maps/thumbnails/de_dust2.png"))
+    mapSequence.append(loadImage("maps/thumbnails/crater.png"))
+
+    mapIndex = 0
 
     global arSequence, arIndex
 
@@ -251,7 +275,7 @@ def setup():
     size(1000, 700, P3D)
     noClip()
     fullScreen()
-    noCursor()
+    #noCursor()
     frameRate(60)
 
 
@@ -334,7 +358,7 @@ def Astar(start, end):
 
     print(navMesh)
     temp = navMesh[0][20]
-    print(temp[0])
+    #print(temp[0])
     #exit()
     # debug
     # start = 1,0,1
@@ -540,9 +564,6 @@ def raycast(x,y,z, angleX, angleY):
             if AABB([(rx-5),(ry-5),(rz-5), (rx+5),(ry+5),(rz+5)], [(ex-60),(ey-120),(ez-60), (ex+60),(ey+120),(ez+60)]) == True:
                 e += 1
                 return id
-
-        if hitboxes[int(floor(ry/100))][int(floor(rx/100))][int(floor(rz/100))] == 1:
-            return None
 
 
         raycastDistance += 50
@@ -1225,11 +1246,7 @@ def zombieMove(player): # TODO: potentially needs a refactor to organise some va
                     index[3] = float(rot)
                     index[7] = timer1
                     index[8] = timer2
-                
-
-
-
-            
+                      
 def gameManager(setup=False):
     global time4, time5, wave, entity
     global totalZombies, maxZombies
@@ -1240,7 +1257,11 @@ def gameManager(setup=False):
         wave = 0
 
     # spawnable locations
-    locations = [[3,13,29],[4,13,29],[5,13,29],[23,13,17],[23,13,18],[23,13,19],[23,11,10],[23,11,11],[23,11,12]]
+    global mapIndex
+    if mapIndex == 0:
+        locations = [[3,13,29],[4,13,29],[5,13,29],[23,13,17],[23,13,18],[23,13,19],[23,11,10],[23,11,11],[23,11,12]]
+    elif mapIndex == 1:
+        locations = [[33,-4,16],[16,-4,16],[33,-4,33],[16,-4,33]]
     if millis() - time4 < 10000:
         playerUi(timer=(10 - ((millis() - time4)/1000))) # display the player a countdown timer
     else:
@@ -1280,291 +1301,499 @@ def gameManager(setup=False):
                 Tx,Ty,Tz = gridConvert(locations[randomId][0],locations[randomId][1],locations[randomId][2])
                 entity.append([Tx,Ty,Tz,str(float(random((-2*PI),(2*PI)))),str(0),str(maxZombies-totalZombies),[],int(0),int(0)]) # [x,y,z,rotation,type,id,path,timer1,timer2]
 
+def drawMainMenu():
+
+    global mainMenu, mainMenuBG, title, keybinds
+
+    mainMenu.beginDraw()
+    mainMenu.clear()
+    mainMenu.imageMode(CORNER)
+    mainMenu.image(mainMenuBG, 0, 0, width, height)
+    mainMenu.image(keybinds, 10, height-(height/6)-10, (width/6)*2, (height/6))
+    mainMenu.image(title, (width/2)-(width/4), 10, (width/2), (height/5))
+
+    mainMenu.endDraw()
+
+    pushMatrix()
+    camera()
+    hint(DISABLE_DEPTH_TEST)
+    noLights()
+    image(mainMenu,0,0)
+    hint(ENABLE_DEPTH_TEST)
+    popMatrix()
+
+def sceneSwitcher():
+
+    global mainMenu
+
+    mainMenu.beginDraw()
+
+    # select button
+    mainMenu.rectMode(CENTER)
+    mainMenu.fill(255,0,0)
+    mainMenu.stroke(0)
+    mainMenu.strokeWeight(2)
+    mainMenu.rect((width/5)*2.5, (height/2)+(height/4), 200, 50)
+    mainMenu.fill(0)
+    mainMenu.textSize(30)
+    mainMenu.textAlign(CENTER)
+    mainMenu.text("Start", (width/5)*2.5, (height/2)+(height/4)+10)
+
+    # left button
+    mainMenu.rectMode(CENTER)
+    mainMenu.fill(255,0,0)
+    mainMenu.stroke(0)
+    mainMenu.strokeWeight(2)
+    mainMenu.rect((width/5)*1.5, height/2, 50, 200)
+    mainMenu.fill(0)
+    mainMenu.textSize(30)
+    mainMenu.textAlign(CENTER)
+    mainMenu.text("<", (width/5)*1.5, height/2+10)
+
+    # right button
+    mainMenu.rectMode(CENTER)
+    mainMenu.fill(255,0,0)
+    mainMenu.stroke(0)
+    mainMenu.strokeWeight(2)
+    mainMenu.rect((width/5)*3.5, height/2, 50, 200)
+    mainMenu.fill(0)
+    mainMenu.textSize(30)
+    mainMenu.textAlign(CENTER)
+    mainMenu.text(">", (width/5)*3.5, height/2+10)
+
+    # map image
+    global mapSequence, mapIndex
+    mainMenu.imageMode(CENTER)
+    mainMenu.image(mapSequence[mapIndex], (width/5)*2.5, (height/2), 280, 180)
+
+    # mouse cursor
+    global cursorIMG
+    mainMenu.image(cursorIMG, mouseX, mouseY, 50, 50)
+
+    mainMenu.endDraw()
+
+    pushMatrix()
+    camera()
+    hint(DISABLE_DEPTH_TEST)
+    noLights()
+    image(mainMenu,0,0)
+    hint(ENABLE_DEPTH_TEST)
+    popMatrix()
+
+def drawGameOver():
+    
+        global gameOver, gameOverText, wave
+
+        # general ui elements
+        gameOver.beginDraw()
+        gameOver.clear()
+        gameOver.imageMode(CORNER)
+        gameOver.background(0,0,0,200)
+        gameOver.image(gameOverText, (width/2)-(width/4), (height/2)-(height/3), (width/2), (height/2))
+
+        # display wave number
+        gameOver.textSize(30)
+        gameOver.textAlign(CENTER)
+        gameOver.fill(255,0,0)
+        gameOver.text("wave: " + str(wave), (width/2), (height/2)+50)
+
+        # retry button
+        gameOver.rectMode(CENTER)
+        gameOver.fill(255,0,0)
+        gameOver.stroke(0)
+        gameOver.strokeWeight(2)
+        gameOver.rect((width/5)*2.5, (height/2)+(height/4), 200, 50)
+        gameOver.fill(0)
+        gameOver.textSize(30)
+        gameOver.textAlign(CENTER)
+        gameOver.text("Retry", (width/5)*2.5, (height/2)+(height/4)+10)
+
+        # main menu button
+        gameOver.rectMode(CENTER)
+        gameOver.fill(255,0,0)
+        gameOver.stroke(0)
+        gameOver.strokeWeight(2)
+        gameOver.rect((width/5)*2.5, (height/2)+(height/4)+75, 200, 50)
+        gameOver.fill(0)
+        gameOver.textSize(30)
+        gameOver.textAlign(CENTER)
+        gameOver.text("Main Menu", (width/5)*2.5, (height/2)+(height/4)+85)
+
+        # mouse cursor
+        global cursorIMG
+        gameOver.image(cursorIMG, mouseX, mouseY, 50, 50)
+
+        gameOver.endDraw()
+    
+        pushMatrix()
+        camera()
+        hint(DISABLE_DEPTH_TEST)
+        noLights()
+        image(gameOver,0,0)
+        hint(ENABLE_DEPTH_TEST)
+        popMatrix()
+    
 def draw():
 
-    benchmarkStart = millis()
+    global sceneIndex
 
-    # lights()
-    background(58, 57, 63)
-    
-    global scaling_factor, buffer, bx, by, bz, angle, rotation, x, y, z, hitboxes, time
-    # Define camera mathww
-    xCenter = ((float(mouseX) - (float(width)/2)) / float(width) ) * (4*PI)
-    yCenter = ((float(mouseY) - (float(height)/2)) / float(height) ) * (2*PI)
-    ## print("Angle:" + str(360*(xCenter)/2*PI))
-    rotation = xCenter
-    #####################
+    if sceneIndex == 0:
+        # run main menu
+        print("main menu")
 
-    # shooting
-    global shooting, reloading
-    if shooting == True and reloading == False:
-        print("shooting")
-        raycastOut = raycast(x,y,z,xCenter,yCenter)
-        print(raycastOut)
-        try:
-            if raycastOut == None:
-                pass
-            if len(raycastOut) == 3:
-                pass
-        except TypeError:
-            if raycastOut != None:
-                for item in entity:
-                    if int(item[5]) == int(raycastOut):
-                        print("hit")
+        cursor()
+        drawMainMenu()
 
-                        global emitters, ammoBoxes
-                        pos = item[0],item[1],item[2]
-                        print(entity)
-                        emitters.append([pos,millis()])
+        sceneSwitcher()
 
-                        # drop ammo box
-                        global wave
-                        scaleFactor = 1.2
-                        maxZ = floor(10 + (wave*scaleFactor))
-                        if random(0,maxZ) >= maxZ-1:
-                            ammoBoxes.append([item[0],item[1],item[2],int(0)])
+        global mapIndex 
+        if mousePressed:
+            # select button
+            if (width/5)*2.5-100 <= mouseX <= (width/5)*2.5+100 and (height/2)+(height/4)-25 <= mouseY <= (height/2)+(height/4)+25:
+                global time 
+                time = millis()
 
-                        entity.remove(item)
-                        print(entity)
-                        break
+                # wait to load map before switching scenes
+                i = 0
+                while i != 1:
+                    global hitboxes
+                    hitboxes = loadHitboxes(mapIndex) # hitboxes only need to be loaded once
+                    #print(hitboxes[2][4][0])
+                    # exit()
 
+                    global navMesh
+                    navMesh = genNavMesh(hitboxes) # navmesh only needs to be generated once
 
+                    if hitboxes != None and navMesh != None:
+                        i = 1
+                        print("loaded")
 
-    # get hitboxes
-    # localise the player position based on the camera
-    dx,dy,dz = player()
-
-    # run gravity calculations
-
-    # renderBlock(x,((y+300)),z,255,0,0)
-    if hitboxCalc(x,y,z,1,1) >= 1: # y, x, z
-        time = millis() # set time since last on ground
-        print("set time")
-
-
-    if hitboxCalc(x,y,z,1,1) == 0: # y, x, z
-        if dy == 0:
-            dt = ((millis() - time)/500)+2
-            gravity = 9.8
-            dy += gravity * dt
-    else:
-        if dy == 0:
-            tempArray = hitboxCalc(x,y,z,1,0)
-            e = 0
-            for item in tempArray:
-                hx, hy, hz = gridConvert(item[0], item[1], item[2])
-                hx, hy, hz = floor(hx), floor(hy), floor(hz)
-                #renderBlock(hx,hy,hz,255,0,0)
-
-                feather = 60
-
-                if AABB([(x-10),(y-10),(z-10), ((x+10)),(y+210),((z+10))], [hx-feather,hy-feather,hz-feather, hx+feather,hy+feather,hz+feather]) == False:
-                    e += 1
+                if mapIndex == 1:
+                    global x,y,z
+                    x,y,z = 2500,200,2500
                 
-            if e == len(tempArray):
+                sceneIndex = 1
+
+            
+            # left button
+            if (width/5)*1.5-25 <= mouseX <= (width/5)*1.5+25 and (height/2)-100 <= mouseY <= (height/2)+100:
+                if mapIndex != 0:
+                    mapIndex -= 1
+            
+            # right button
+            if (width/5)*3.5-25 <= mouseX <= (width/5)*3.5+25 and (height/2)-100 <= mouseY <= (height/2)+100:
+                if mapIndex != 1:
+                    mapIndex += 1
+
+
+
+
+    elif sceneIndex == 1:
+        # run game loop
+        benchmarkStart = millis()
+
+        # lights()
+        background(58, 57, 63)
+        noCursor()
+        
+        global scaling_factor, buffer, bx, by, bz, angle, rotation, x, y, z, hitboxes, time
+        # Define camera mathww
+        xCenter = ((float(mouseX) - (float(width)/2)) / float(width) ) * (4*PI)
+        yCenter = ((float(mouseY) - (float(height)/2)) / float(height) ) * (2*PI)
+        ## print("Angle:" + str(360*(xCenter)/2*PI))
+        rotation = xCenter
+        #####################
+
+        # shooting
+        global shooting, reloading
+        if shooting == True and reloading == False:
+            print("shooting")
+            raycastOut = raycast(x,y,z,xCenter,yCenter)
+            print(raycastOut)
+            try:
+                if raycastOut == None:
+                    pass
+                if len(raycastOut) == 3:
+                    pass
+            except TypeError:
+                if raycastOut != None:
+                    for item in entity:
+                        if int(item[5]) == int(raycastOut):
+                            print("hit")
+
+                            global emitters, ammoBoxes
+                            pos = item[0],item[1],item[2]
+                            print(entity)
+                            emitters.append([pos,millis()])
+
+                            # drop ammo box
+                            global wave
+                            scaleFactor = 1.2
+                            maxZ = floor(10 + (wave*scaleFactor))
+                            if random(0,maxZ) >= maxZ-1:
+                                ammoBoxes.append([item[0],item[1],item[2],int(0)])
+
+                            entity.remove(item)
+                            print(entity)
+                            break
+
+
+
+        # get hitboxes
+        # localise the player position based on the camera
+        dx,dy,dz = player()
+
+        # run gravity calculations
+
+        # renderBlock(x,((y+300)),z,255,0,0)
+        if hitboxCalc(x,y,z,1,1) >= 1: # y, x, z
+            time = millis() # set time since last on ground
+            print("set time")
+
+
+        if hitboxCalc(x,y,z,1,1) == 0: # y, x, z
+            if dy == 0:
                 dt = ((millis() - time)/500)+2
                 gravity = 9.8
                 dy += gravity * dt
-
-
-
-    # Run player movement
-    if dz > 0:
-        print("forward")
-        
-        if hitboxCalc(x,y,z,0,1) == 0: # y, x, z
-            # calculate the movement      
-            dx,dz = movementCalc(0,dz, rotation)
         else:
-            # test if objects around player are collidable and add them to an array
-            tempArray = hitboxCalc(x,y,z)
+            if dy == 0:
+                tempArray = hitboxCalc(x,y,z,1,0)
+                e = 0
+                for item in tempArray:
+                    hx, hy, hz = gridConvert(item[0], item[1], item[2])
+                    hx, hy, hz = floor(hx), floor(hy), floor(hz)
+                    #renderBlock(hx,hy,hz,255,0,0)
 
-            # test if the player will collide with any of the objects
-            tx,tz = movementCalc(0,dz, rotation) # temporary x y z
-            e = 0
-            for item in tempArray:
-                hx, hy, hz = gridConvert(item[0], item[1], item[2])
-                hx, hy, hz = floor(hx), floor(hy), floor(hz)
-                
-                #renderBlock(hx,hy,hz,255,0,0)
+                    feather = 60
 
-                # print("x: " + str(x) + " y: " + str(y) + " z: " + str(z) + " dx: " + str(dx) + " dz: " + str(dz) + " hx: " + str(hx) + " hy: " + str(hy) + " hz: " + str(hz))
-                feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
-                # print("tx: " + str(tx) + " tz: " + str(tz))
-                # print(AABB([((x+(2*tx))),((250)),((z+(tz*2))), ((x+(tx*2))),(250),((z+(tz*2))),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]))
-                if AABB([((x+(4*tx)-10)),((y)),((z+(tz*4)-10)), ((x+(tx*4)+10)),(y+200),((z+(tz*4)+10)),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]) == True:
-                    print("collision")
-                    dx,dz = 0,0
-                else:
-                    print("no")
-                    e += 1
-                    # dx,dy,dz = 0,0,0
+                    if AABB([(x-10),(y-10),(z-10), ((x+10)),(y+210),((z+10))], [hx-feather,hy-feather,hz-feather, hx+feather,hy+feather,hz+feather]) == False:
+                        e += 1
+                    
+                if e == len(tempArray):
+                    dt = ((millis() - time)/500)+2
+                    gravity = 9.8
+                    dy += gravity * dt
+
+
+
+        # Run player movement
+        if dz > 0:
+            print("forward")
             
-            # only execute the movement if there are no collisions
-            if e == len(tempArray):
+            if hitboxCalc(x,y,z,0,1) == 0: # y, x, z
+                # calculate the movement      
                 dx,dz = movementCalc(0,dz, rotation)
+            else:
+                # test if objects around player are collidable and add them to an array
+                tempArray = hitboxCalc(x,y,z)
 
-    elif dz < 0:
-        print("backward")
+                # test if the player will collide with any of the objects
+                tx,tz = movementCalc(0,dz, rotation) # temporary x y z
+                e = 0
+                for item in tempArray:
+                    hx, hy, hz = gridConvert(item[0], item[1], item[2])
+                    hx, hy, hz = floor(hx), floor(hy), floor(hz)
+                    
+                    #renderBlock(hx,hy,hz,255,0,0)
 
-        if hitboxCalc(x,y,z,1) == 0: # y, x, z
-            # calculate the movement      
-            dx,dz = movementCalc(1,dz, rotation)
-        else:
-            # test if objects around player are collidable and add them to an array
-            tempArray = hitboxCalc(x,y,z)
-
-            # test if the player will collide with any of the objects
-            tx,tz = movementCalc(1,dz, rotation) # temporary x y z
-            e = 0
-            for item in tempArray:
-                hx, hy, hz = gridConvert(item[0], item[1], item[2])
-                hx, hy, hz = floor(hx), floor(hy), floor(hz)
+                    # print("x: " + str(x) + " y: " + str(y) + " z: " + str(z) + " dx: " + str(dx) + " dz: " + str(dz) + " hx: " + str(hx) + " hy: " + str(hy) + " hz: " + str(hz))
+                    feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
+                    # print("tx: " + str(tx) + " tz: " + str(tz))
+                    # print(AABB([((x+(2*tx))),((250)),((z+(tz*2))), ((x+(tx*2))),(250),((z+(tz*2))),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]))
+                    if AABB([((x+(4*tx)-10)),((y)),((z+(tz*4)-10)), ((x+(tx*4)+10)),(y+200),((z+(tz*4)+10)),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]) == True:
+                        print("collision")
+                        dx,dz = 0,0
+                    else:
+                        print("no")
+                        e += 1
+                        # dx,dy,dz = 0,0,0
                 
-                #renderBlock(hx,hy,hz,255,0,0)
+                # only execute the movement if there are no collisions
+                if e == len(tempArray):
+                    dx,dz = movementCalc(0,dz, rotation)
 
-                # print("x: " + str(x) + " y: " + str(y) + " z: " + str(z) + " dx: " + str(dx) + " dz: " + str(dz) + " hx: " + str(hx) + " hy: " + str(hy) + " hz: " + str(hz))
-                feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
-                # print("tx: " + str(tx) + " tz: " + str(tz))
-                # print(AABB([((x+(2*tx))),((250)),((z+(tz*2))), ((x+(tx*2))),(250),((z+(tz*2))),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]))
-                if AABB([((x+(4*tx)-10)),((y)),((z+(tz*4)-10)), ((x+(tx*4)+10)),(y+200),((z+(tz*4)+10)),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]) == True:
-                    print("collision")
-                    dx,dz = 0,0
-                else:
-                    print("no")
-                    e += 1
-                    # dx,dy,dz = 0,0,0
-            
-            # only execute the movement if there are no collisions
-            if e == len(tempArray):
+        elif dz < 0:
+            print("backward")
+
+            if hitboxCalc(x,y,z,1) == 0: # y, x, z
+                # calculate the movement      
                 dx,dz = movementCalc(1,dz, rotation)
+            else:
+                # test if objects around player are collidable and add them to an array
+                tempArray = hitboxCalc(x,y,z)
 
-    elif dx > 0:
-        print("right")
+                # test if the player will collide with any of the objects
+                tx,tz = movementCalc(1,dz, rotation) # temporary x y z
+                e = 0
+                for item in tempArray:
+                    hx, hy, hz = gridConvert(item[0], item[1], item[2])
+                    hx, hy, hz = floor(hx), floor(hy), floor(hz)
+                    
+                    #renderBlock(hx,hy,hz,255,0,0)
 
-        if hitboxCalc(x,y,z,1) == 0: # y, x, z
-            # calculate the movement      
-            dx,dz = movementCalc(2,dx, rotation)
-        else:
-            # test if objects around player are collidable and add them to an array
-            tempArray = hitboxCalc(x,y,z)
-
-            # test if the player will collide with any of the objects
-            tx,tz = movementCalc(2,dx, rotation) # temporary x y z
-            e = 0
-            for item in tempArray:
-                hx, hy, hz = gridConvert(item[0], item[1], item[2])
-                hx, hy, hz = floor(hx), floor(hy), floor(hz)
+                    # print("x: " + str(x) + " y: " + str(y) + " z: " + str(z) + " dx: " + str(dx) + " dz: " + str(dz) + " hx: " + str(hx) + " hy: " + str(hy) + " hz: " + str(hz))
+                    feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
+                    # print("tx: " + str(tx) + " tz: " + str(tz))
+                    # print(AABB([((x+(2*tx))),((250)),((z+(tz*2))), ((x+(tx*2))),(250),((z+(tz*2))),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]))
+                    if AABB([((x+(4*tx)-10)),((y)),((z+(tz*4)-10)), ((x+(tx*4)+10)),(y+200),((z+(tz*4)+10)),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]) == True:
+                        print("collision")
+                        dx,dz = 0,0
+                    else:
+                        print("no")
+                        e += 1
+                        # dx,dy,dz = 0,0,0
                 
-                #renderBlock(hx,hy,hz,255,0,0)
+                # only execute the movement if there are no collisions
+                if e == len(tempArray):
+                    dx,dz = movementCalc(1,dz, rotation)
 
-                # print("x: " + str(x) + " y: " + str(y) + " z: " + str(z) + " dx: " + str(dx) + " dz: " + str(dz) + " hx: " + str(hx) + " hy: " + str(hy) + " hz: " + str(hz))
-                feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
-                # print("tx: " + str(tx) + " tz: " + str(tz))
-                # print(AABB([((x+(2*tx))),((250)),((z+(tz*2))), ((x+(tx*2))),(250),((z+(tz*2))),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]))
-                if AABB([((x+(4*tx)-10)),((y)),((z+(tz*4)-10)), ((x+(tx*4)+10)),(y+200),((z+(tz*4)+10)),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]) == True:
-                    print("collision")
-                    dx,dz = 0,0
-                else:
-                    print("no")
-                    e += 1
-                    # dx,dy,dz = 0,0,0
-            
-            # only execute the movement if there are no collisions
-            if e == len(tempArray):
+        elif dx > 0:
+            print("right")
+
+            if hitboxCalc(x,y,z,1) == 0: # y, x, z
+                # calculate the movement      
                 dx,dz = movementCalc(2,dx, rotation)
+            else:
+                # test if objects around player are collidable and add them to an array
+                tempArray = hitboxCalc(x,y,z)
 
-    elif dx < 0:
-        print("left")
-        
-        if hitboxCalc(x,y,z,1) == 0: # y, x, z
-            # calculate the movement      
-            dx,dz = movementCalc(3,dx, rotation)
-        else:
-            # test if objects around player are collidable and add them to an array
-            tempArray = hitboxCalc(x,y,z)
+                # test if the player will collide with any of the objects
+                tx,tz = movementCalc(2,dx, rotation) # temporary x y z
+                e = 0
+                for item in tempArray:
+                    hx, hy, hz = gridConvert(item[0], item[1], item[2])
+                    hx, hy, hz = floor(hx), floor(hy), floor(hz)
+                    
+                    #renderBlock(hx,hy,hz,255,0,0)
 
-            # test if the player will collide with any of the objects
-            tx, tz = movementCalc(3,dx, rotation) # temporary x y z
-            e = 0
-            for item in tempArray:
-                hx, hy, hz = gridConvert(item[0], item[1], item[2])
-                hx, hy, hz = floor(hx), floor(hy), floor(hz)
+                    # print("x: " + str(x) + " y: " + str(y) + " z: " + str(z) + " dx: " + str(dx) + " dz: " + str(dz) + " hx: " + str(hx) + " hy: " + str(hy) + " hz: " + str(hz))
+                    feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
+                    # print("tx: " + str(tx) + " tz: " + str(tz))
+                    # print(AABB([((x+(2*tx))),((250)),((z+(tz*2))), ((x+(tx*2))),(250),((z+(tz*2))),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]))
+                    if AABB([((x+(4*tx)-10)),((y)),((z+(tz*4)-10)), ((x+(tx*4)+10)),(y+200),((z+(tz*4)+10)),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]) == True:
+                        print("collision")
+                        dx,dz = 0,0
+                    else:
+                        print("no")
+                        e += 1
+                        # dx,dy,dz = 0,0,0
                 
-                #renderBlock(hx,hy,hz,255,0,0)
+                # only execute the movement if there are no collisions
+                if e == len(tempArray):
+                    dx,dz = movementCalc(2,dx, rotation)
 
-                # print("x: " + str(x) + " y: " + str(y) + " z: " + str(z) + " dx: " + str(dx) + " dz: " + str(dz) + " hx: " + str(hx) + " hy: " + str(hy) + " hz: " + str(hz))
-                feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
-                # print("tx: " + str(tx) + " tz: " + str(tz))
-                # print(AABB([((x+(2*tx))),((250)),((z+(tz*2))), ((x+(tx*2))),(250),((z+(tz*2))),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]))
-                if AABB([((x+(4*tx)-10)),((y)),((z+(tz*4)-10)), ((x+(tx*4)+10)),(y+200),((z+(tz*4)+10)),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]) == True:
-                    print("collision")
-                    dx,dz = 0,0
-                else:
-                    print("no")
-                    e += 1
-                    # dx,dy,dz = 0,0,0
+        elif dx < 0:
+            print("left")
             
-            # only execute the movement if there are no collisions
-            if e == len(tempArray):
+            if hitboxCalc(x,y,z,1) == 0: # y, x, z
+                # calculate the movement      
                 dx,dz = movementCalc(3,dx, rotation)
+            else:
+                # test if objects around player are collidable and add them to an array
+                tempArray = hitboxCalc(x,y,z)
+
+                # test if the player will collide with any of the objects
+                tx, tz = movementCalc(3,dx, rotation) # temporary x y z
+                e = 0
+                for item in tempArray:
+                    hx, hy, hz = gridConvert(item[0], item[1], item[2])
+                    hx, hy, hz = floor(hx), floor(hy), floor(hz)
+                    
+                    #renderBlock(hx,hy,hz,255,0,0)
+
+                    # print("x: " + str(x) + " y: " + str(y) + " z: " + str(z) + " dx: " + str(dx) + " dz: " + str(dz) + " hx: " + str(hx) + " hy: " + str(hy) + " hz: " + str(hz))
+                    feather = 60 # how far out the collision check is https://www.desmos.com/calculator/t4tosexwdn distance value is "o"
+                    # print("tx: " + str(tx) + " tz: " + str(tz))
+                    # print(AABB([((x+(2*tx))),((250)),((z+(tz*2))), ((x+(tx*2))),(250),((z+(tz*2))),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]))
+                    if AABB([((x+(4*tx)-10)),((y)),((z+(tz*4)-10)), ((x+(tx*4)+10)),(y+200),((z+(tz*4)+10)),], [hx-feather,hy-feather,hz-feather,hx+feather,hy+feather,hz+feather]) == True:
+                        print("collision")
+                        dx,dz = 0,0
+                    else:
+                        print("no")
+                        e += 1
+                        # dx,dy,dz = 0,0,0
+                
+                # only execute the movement if there are no collisions
+                if e == len(tempArray):
+                    dx,dz = movementCalc(3,dx, rotation)
 
 
-    x += dx
-    z += dz
-    y += dy
+        x += dx
+        z += dz
+        y += dy
 
-    # execute camera movement
-    beginCamera()
-    # camera(x-60, yCenter, z-60, (50*cos(xCenter)) + x-60, (50*yCenter), (50*sin(xCenter)) + z-60, 0, 1, 0) # WHY THE FUCK DO YOU NEED -60?!?!?!
-    camera(x, y, z, (50*cos(xCenter)) + x, (50*yCenter)+y, (50*sin(xCenter)) + z, 0, 1, 0) 
-    ## print(yCenter)
-    perspective()
-    endCamera()
+        # execute camera movement
+        beginCamera()
+        # camera(x-60, yCenter, z-60, (50*cos(xCenter)) + x-60, (50*yCenter), (50*sin(xCenter)) + z-60, 0, 1, 0) # WHY THE FUCK DO YOU NEED -60?!?!?!
+        camera(x, y, z, (50*cos(xCenter)) + x, (50*yCenter)+y, (50*sin(xCenter)) + z, 0, 1, 0) 
+        ## print(yCenter)
+        perspective()
+        endCamera()
 
-    # apply player hitbox movement
-    # x - x+50, y - y+50, z - z+50
+        # apply player hitbox movement
+        # x - x+50, y - y+50, z - z+50
 
-    print("rotation:" + str(rotation))
-    print("x: " + str(x) + " y: " + str(y) + " z: " + str(z))
-    # Load the map
-    loadMap(2, 0, 0, 0)
-    #print(genNavMesh(hitboxes))
-    #print(navMesh)
-    #exit()
+        print("rotation:" + str(rotation))
+        print("x: " + str(x) + " y: " + str(y) + " z: " + str(z))
+        # Load the map
+        global mapIndex
+        loadMap(int(mapIndex), 0, 0, 0)
+        #print(genNavMesh(hitboxes))
+        #print(navMesh)
+        #exit()
 
-    # run game manager function
-    gameManager()
+        # run game manager function
+        gameManager()
 
-    # load zombies
-    playerCord = x,y,z
-    zombieMove(playerCord)
-    spawnZombies(entity)
+        # load zombies
+        playerCord = x,y,z
+        zombieMove(playerCord)
+        spawnZombies(entity)
 
-    runEmitters()
-    runAmmoBoxes()
+        runEmitters()
+        runAmmoBoxes()
 
-    # detect if player intersected with an ammo box
-    global ammoBoxes, tAmmo
-    for item in ammoBoxes:
-        feather = 30
-        if AABB([(x-20),(y),(z-20), (x+20),(y+200),(z+20)], [(item[0]-feather),(item[1]-feather),(item[2]-feather), (item[0]+feather),(item[1]+feather),(item[2]+feather)]) == True:
-            ammoBoxes.remove(item)
-            tAmmo += 10
-
-
-    # start = 18,14,24
-    # end = 4,14,26 
-    # benchmarkStartAstar = millis()
-    # print(Astar(hitboxes[14],start,end))
-    # print("This frame took " + str(millis() - benchmarkStartAstar) + " miliseconds to complete")
-    #exit()
-
-    # run ui commands
-    f3(x,y,z,rotation)
-    playerUi()
-    damageOverlay()
-    runTextOverlay()
+        # detect if player intersected with an ammo box
+        global ammoBoxes, tAmmo
+        for item in ammoBoxes:
+            feather = 30
+            if AABB([(x-20),(y),(z-20), (x+20),(y+200),(z+20)], [(item[0]-feather),(item[1]-feather),(item[2]-feather), (item[0]+feather),(item[1]+feather),(item[2]+feather)]) == True:
+                ammoBoxes.remove(item)
+                tAmmo += 10
 
 
-    print("This frame took " + str(millis() - benchmarkStart) + " miliseconds to complete")
+        # start = 18,14,24
+        # end = 4,14,26 
+        # benchmarkStartAstar = millis()
+        # print(Astar(hitboxes[14],start,end))
+        # print("This frame took " + str(millis() - benchmarkStartAstar) + " miliseconds to complete")
+        #exit()
+
+        # run ui commands
+        f3(x,y,z,rotation)
+        playerUi()
+        damageOverlay()
+        runTextOverlay()
+
+
+        print("This frame took " + str(millis() - benchmarkStart) + " miliseconds to complete")
+
+    elif sceneIndex == 2:
+        # run game over screen
+        print("game over")
+
+        cursor()
+        drawGameOver()
+
+        if mousePressed:
+            # retry button
+            if (width/5)*2.5-100 <= mouseX <= (width/5)*2.5+100 and (height/2)+(height/4)-25 <= mouseY <= (height/2)+(height/4)+25:
+                sceneIndex = 1
+                global time 
+                time = millis()
+            
+            # main menu button
+            if (width/5)*2.5-100 <= mouseX <= (width/5)*2.5+100 and (height/2)+(height/4)+50 <= mouseY <= (height/2)+(height/4)+100:
+                sceneIndex = 0
+
