@@ -1,11 +1,11 @@
 ##############################################################################
-# spaceInvaders.py - Space Invaders Game in Processing 3                     #
+# processingZombies.py - Zombie survival game in Processing 3                #
 #                                                                            # 
 ##############################################################################
 
 # if running on linux, uncomment the following two lines
-from java.lang import System
-System.setProperty("jogl.disable.openglcore", "false")
+# from java.lang import System
+# System.setProperty("jogl.disable.openglcore", "false")
 
 def gridConvert(x, y, z):
     global scaling_factor
@@ -1717,7 +1717,7 @@ def draw():
 
         # execute camera movement
         beginCamera()
-        # camera(x-60, yCenter, z-60, (50*cos(xCenter)) + x-60, (50*yCenter), (50*sin(xCenter)) + z-60, 0, 1, 0) # WHY THE FUCK DO YOU NEED -60?!?!?!
+        # camera(x-60, yCenter, z-60, (50*cos(xCenter)) + x-60, (50*yCenter), (50*sin(xCenter)) + z-60, 0, 1, 0) 
         camera(x, y, z, (50*cos(xCenter)) + x, (50*yCenter)+y, (50*sin(xCenter)) + z, 0, 1, 0) 
         ## print(yCenter)
         perspective()
