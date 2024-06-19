@@ -69,7 +69,7 @@ def load_map(filePath):
     
     return dataIndex
 
-dataIndex = load_map(f"C:/Users/hoeth/OneDrive/Desktop/3D-SpaceInvaders/SpaceInvaders/data/maps/test.txt")
+dataIndex = load_map(f"./3D-SpaceInvaders/SpaceInvaders/data/maps/test.txt")
 newFile = False
 ylevel = 3
 color1 = "#ff0000"

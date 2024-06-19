@@ -4,7 +4,7 @@ from PIL import Image
 # for each file in directory
 for i in range(1, 13):
 
-    image = Image.open(f"C:/Users/hoeth/OneDrive/Desktop/3D-SpaceInvaders/mapBuilder/crater/{i}.png")
+    image = Image.open(f"./3D-SpaceInvaders/mapBuilder/crater/{i}.png")
 
     ylevel = i
     width, height = image.size
@@ -23,7 +23,7 @@ for i in range(1, 13):
                 dataIndex.update({(x,ylevel,z): (r,g,b)})
 
     # save the data to a file
-    with open("C:/Users/hoeth/OneDrive/Desktop/3D-SpaceInvaders/SpaceInvaders/data/maps/test7.txt", "a") as file:
+    with open("./3D-SpaceInvaders/SpaceInvaders/data/maps/test7.txt", "a") as file:
         for key, value in dataIndex.items():
             file.write("[" + str(key[0]) + "," + str(key[1]) + "," + str(key[2]) + "," + str(value[0]) + "," + str(value[1]) + "," + str(value[2]) + "]\n")
             # print("[" + str(key[0]) + "," + str(key[1]) + "," + str(key[2]) + "," + str(value[0]) + "," + str(value[1]) + "," + str(value[2]) + "]\n")
