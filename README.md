@@ -3,7 +3,6 @@
 
 <img src="https://github.com/thefudgeishot/Procesing-Zombies/assets/33798627/6782c8a4-374a-4a68-9f88-740e651578d6)" width="500">
 
-Hello
 #
 > [!WARNING]
 > This game will run at varying frames per second depending on screen size. <br /> 
